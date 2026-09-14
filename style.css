@@ -1,0 +1,4694 @@
+/* ============================================================
+   李成泽 · 个人作品集
+   第一屏：全屏视频首页 / 第二屏：个人简介
+   ============================================================ */
+
+:root {
+  --bg: #08080b;
+  --bg-2: #0d0d12;
+  --text: #f5f5f7;
+  --text-soft: rgba(245, 245, 247, .66);
+  --text-faint: rgba(245, 245, 247, .38);
+  --line: rgba(255, 255, 255, .1);
+  --line-strong: rgba(255, 255, 255, .2);
+  --surface: rgba(255, 255, 255, .04);
+  --surface-hover: rgba(255, 255, 255, .075);
+
+  --accent: #ff5a3c;
+  --accent-2: #ffa14d;
+  --accent-glow: rgba(255, 90, 60, .35);
+  --cyan: #43d9ff;
+
+  --ease: cubic-bezier(.22, 1, .36, 1);
+  --ease-soft: cubic-bezier(.4, 0, .2, 1);
+  --maxw: 1280px;
+  --gutter: 56px;
+
+  /* 一笔墨痕：起笔略顿、行笔中部最厚、收笔斜出锋，右侧另有一丝飞白与一粒溅墨。
+     做成遮罩而不是图片，颜色就能跟着 currentColor 走
+     （深色版 / 浅色版共用一份，不必各写一个 data-URI）。 */
+  --ink-stroke: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 20'%3E%3Cpath d='M3 11.6C26 8.4 58 6.6 96 6.4C136 6.2 178 6.8 214 4.6C224 3.9 232 3.3 238.5 2.6C237 4.4 233 6.6 226 8.4C200 13.2 156 15 110 14.8C70 14.6 26 13.6 3 11.6Z' fill='%23000'/%3E%3Cpath d='M186 5.4C204 3.4 222 2.2 238 1.4C224 3.6 206 5.6 188 6.6Z' fill='%23000' opacity='.5'/%3E%3Ccircle cx='16' cy='3.4' r='1.7' fill='%23000' opacity='.75'/%3E%3C/svg%3E");
+
+  color-scheme: dark;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 16px;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+button { font-family: inherit; cursor: pointer; border: none; background: none; color: inherit; }
+img, video { display: block; max-width: 100%; }
+svg { display: block; }
+ul { list-style: none; }
+em { font-style: normal; }
+
+::selection { background: var(--accent); color: #fff; }
+
+/* ============================================================
+   导航
+   ============================================================ */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 100;
+  padding: 22px var(--gutter);
+  transition: background-color .4s var(--ease), backdrop-filter .4s, padding .4s var(--ease), border-color .4s;
+  border-bottom: 1px solid transparent;
+}
+.nav.is-scrolled {
+  padding: 14px var(--gutter);
+  background: rgba(8, 8, 11, .72);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom-color: var(--line);
+}
+.nav__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.nav__logo { display: flex; align-items: center; gap: 11px; font-weight: 600; }
+.nav__logo-mark {
+  width: 34px; height: 34px;
+  display: grid; place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .02em;
+  box-shadow: 0 4px 16px var(--accent-glow);
+  transition: transform .45s var(--ease);
+}
+.nav__logo:hover .nav__logo-mark { transform: rotate(-10deg) scale(1.06); }
+.nav__logo-text { font-size: 16px; letter-spacing: .01em; }
+
+.nav__links { display: flex; gap: 32px; }
+.nav__link {
+  font-size: 14.5px;
+  color: var(--text-soft);
+  position: relative;
+  padding: 4px 0;
+  transition: color .3s;
+}
+.nav__link--muted { color: var(--text-faint); }
+.nav__link::after {
+  content: '';
+  position: absolute;
+  left: 0; bottom: 0;
+  width: 0; height: 1.5px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width .4s var(--ease);
+}
+.nav__link:hover { color: var(--text); }
+.nav__link:hover::after { width: 100%; }
+
+.nav__burger {
+  display: none;
+  width: 40px; height: 40px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+.nav__burger span {
+  width: 19px; height: 1.5px;
+  background: var(--text);
+  transition: transform .35s var(--ease), opacity .3s;
+}
+.nav__burger.is-open span:first-child { transform: translateY(3.25px) rotate(45deg); }
+.nav__burger.is-open span:last-child { transform: translateY(-3.25px) rotate(-45deg); }
+
+/* 滚动进度条 */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  width: 0%;
+  z-index: 101;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2), var(--cyan));
+  box-shadow: 0 0 12px var(--accent-glow);
+  transition: width .1s linear;
+}
+
+/* ============================================================
+   第一屏 · 首页
+   ============================================================ */
+.hero {
+  position: relative;
+  min-height: 100svh;
+  display: grid;
+  /* 锁宽是为了让上面的 flex-wrap 真的有约束可依：
+     父级是 align-items:center 的 flex，不写宽度时这个容器会收缩成 max-content，
+     flex-wrap 就永远等不到换行条件。 */
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* --- 视频层 --- */
+.hero__media { position: absolute; inset: 0; z-index: -2; }
+
+.hero__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 1;
+  transition: opacity .8s var(--ease);
+}
+.hero__media.is-fallback .hero__video { opacity: 0; }
+
+/* 视频缺省时的动态渐变海报 */
+.hero__fallback {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 15%, #1b2340 0%, transparent 60%),
+    radial-gradient(ellipse 70% 70% at 85% 80%, #3a1a1e 0%, transparent 62%),
+    linear-gradient(160deg, #0b0f1c 0%, #120a12 55%, #170a0a 100%);
+  opacity: 0;
+  transition: opacity .8s var(--ease);
+}
+.hero__media.is-fallback .hero__fallback { opacity: 1; }
+
+.hero__fallback-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  will-change: transform;
+}
+.hero__fallback-blob--1 {
+  width: 46vw; height: 46vw;
+  top: -12%; left: -6%;
+  background: rgba(58, 96, 255, .34);
+  animation: drift1 22s ease-in-out infinite;
+}
+.hero__fallback-blob--2 {
+  width: 38vw; height: 38vw;
+  bottom: -14%; right: -4%;
+  background: rgba(255, 90, 60, .3);
+  animation: drift2 26s ease-in-out infinite;
+}
+.hero__fallback-blob--3 {
+  width: 30vw; height: 30vw;
+  top: 34%; right: 26%;
+  background: rgba(67, 217, 255, .16);
+  animation: drift3 19s ease-in-out infinite;
+}
+@keyframes drift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(9%, 12%) scale(1.18); }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-12%, -9%) scale(1.14); }
+}
+@keyframes drift3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(14%, -14%) scale(1.24); }
+}
+
+/* 颗粒质感 */
+.hero__fallback-grain {
+  position: absolute;
+  inset: -50%;
+  opacity: .16;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grainShift 8s steps(6) infinite;
+  pointer-events: none;
+}
+@keyframes grainShift {
+  0%   { transform: translate(0, 0); }
+  20%  { transform: translate(-3%, 2%); }
+  40%  { transform: translate(2%, -3%); }
+  60%  { transform: translate(-2%, -2%); }
+  80%  { transform: translate(3%, 1%); }
+  100% { transform: translate(0, 0); }
+}
+
+/* 蒙层：保证文字可读 */
+.hero__scrim {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(8, 8, 11, .68) 0%, rgba(8, 8, 11, .34) 42%, rgba(8, 8, 11, .82) 100%),
+    radial-gradient(ellipse 70% 55% at 50% 50%, transparent 30%, rgba(8, 8, 11, .5) 100%);
+}
+
+/* --- 左上角身份标签 --- */
+.hero__roles {
+  position: absolute;
+  top: 50%;
+  left: var(--gutter);
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  z-index: 3;
+}
+.role {
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  color: var(--text-soft);
+  padding: 5px 0;
+  position: relative;
+  transition: color .4s var(--ease), transform .5s var(--ease), letter-spacing .5s var(--ease);
+  cursor: default;
+  white-space: nowrap;
+}
+.role::before {
+  content: '';
+  position: absolute;
+  left: -18px; top: 50%;
+  width: 0; height: 1.5px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transform: translateY(-50%);
+  transition: width .45s var(--ease);
+}
+.role:hover {
+  color: #fff;
+  transform: translateX(6px);
+  letter-spacing: .2em;
+}
+.role:hover::before { width: 12px; }
+.role__sep { display: none; }
+
+/* --- 中央内容 --- */
+.hero__center {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.hero__title {
+  font-weight: 900;
+  letter-spacing: -.01em;
+  /* 黑体 900 的字面几乎满框，行高给 1.04 就够（宋体字面小、上下出头多，才需要 1.12） */
+  line-height: 1.04;
+  margin-bottom: 46px;
+}
+.hero__title-line { display: block; overflow: hidden; }
+
+.hero__title-name {
+  display: inline-block;
+  /* 刊头回到黑体 —— 用「思源黑体 Black(900)」这一档：
+     900 的字面几乎撑满字身框、横竖笔画厚重均匀，放大成巨型字时
+     是一整块有分量的墨色，刊头要的就是这种"压得住"的体量。
+     500/700 那一档太轻（上一版被否的就是这个方向）；
+     雅黑 Bold 收笔带喇叭口，偏办公味；SimHei / 等线更瘦，站不住。
+     字体栈：Google 的 Noto Sans SC（即思源黑体）→ 本机思源黑 → 苹方 → 雅黑 → 黑体 → 无衬线兜底。 */
+  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC',
+               'Microsoft YaHei', 'SimHei', sans-serif;
+  font-weight: 900;
+  font-size: clamp(3.2rem, 11vw, 8.6rem);
+  /* 900 的字形本身就满，字距只能松一丁点：再大就散了，刊头要"抱团"。 */
+  letter-spacing: .02em;
+  text-indent: .02em;
+  background: linear-gradient(176deg, #ffffff 0%, #f4f7fb 44%, rgba(228, 236, 248, .74) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  /* 只用墨边滤镜，**不要**在这里串 drop-shadow。
+     原因：filter 链的区域由第一个函数决定（url(#inkEdge) 的区域是元素框外扩一圈的矩形），
+     后面追加的 drop-shadow 模糊一旦超出这个矩形就会被硬裁，
+     于是在矩形边界处留出一条硬边 —— 整块看上去就是给标题垫了一张灰板。
+     深墨字压在白云上本来就不需要投影，去掉它板就没了。 */
+  filter: url(#inkEdge);
+  will-change: filter;
+}
+
+/* 副标题：原来是「字距拉到 .58em 的小白字」，
+   又散又空、跟上面那个重字完全脱节。
+   改成「一笔墨痕 + 克制字距的题注」——痕负责分层，字负责说明。 */
+.hero__title-line--sub {
+  position: relative;
+  padding-top: 50px;
+  line-height: 1.3;
+}
+/* 用 currentColor 填色 + SVG 做遮罩，一笔墨痕就能跟着文字色走：
+   不必为深色版 / 浅色版各准备一份 data-URI。 */
+.hero__title-line--sub::before {
+  content: '';
+  position: absolute;
+  left: 50%; top: 16px;
+  width: 174px; height: 15px;
+  margin-left: -87px;
+  background-color: currentColor;
+  -webkit-mask: var(--ink-stroke) center / 100% 100% no-repeat;
+  mask: var(--ink-stroke) center / 100% 100% no-repeat;
+  opacity: .82;
+  transform: scaleX(0);
+  animation: heroRuleIn 1.05s var(--ease) .5s forwards;
+}
+@keyframes heroRuleIn { to { transform: scaleX(1); } }
+
+.hero__title-line--sub > span {
+  display: inline-block;
+  font-size: clamp(.96rem, 1.55vw, 1.16rem);
+  font-weight: 400;
+  letter-spacing: .34em;
+  text-indent: .34em;
+  color: var(--text-soft);
+  text-transform: uppercase;
+}
+
+/* --- 点击探索 --- */
+.explore {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 30px;
+  font-size: 14.5px;
+  letter-spacing: .28em;
+  text-indent: .28em;
+  color: var(--text-soft);
+  transition: color .4s var(--ease);
+}
+.explore__ring {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 60px; height: 60px;
+  margin: -30px 0 0 -30px;
+  border-radius: 50%;
+  border: 1px solid var(--line-strong);
+  transition: all .55s var(--ease);
+  pointer-events: none;
+}
+.explore__ring::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  opacity: 0;
+  transform: scale(.9);
+  animation: ringPulse 2.6s var(--ease-soft) infinite;
+}
+@keyframes ringPulse {
+  0% { opacity: .7; transform: scale(.9); }
+  70%, 100% { opacity: 0; transform: scale(1.75); }
+}
+
+.explore__arrow {
+  width: 18px; height: 18px;
+  transition: transform .45s var(--ease);
+  animation: arrowBob 2.2s var(--ease-soft) infinite;
+}
+@keyframes arrowBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(4px); }
+}
+
+.explore:hover { color: #fff; }
+.explore:hover .explore__ring {
+  width: 152px;
+  height: 152px;
+  margin: -76px 0 0 -76px;
+  border-color: var(--accent);
+  background: rgba(255, 90, 60, .07);
+  box-shadow: 0 0 40px var(--accent-glow);
+}
+.explore:hover .explore__arrow { animation: none; transform: translateY(6px); }
+
+/* --- 底部提示 --- */
+.hero__foot {
+  position: absolute;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11.5px;
+  letter-spacing: .24em;
+  color: var(--text-faint);
+}
+.hero__foot-line {
+  width: 46px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--text-faint));
+  position: relative;
+  overflow: hidden;
+}
+.hero__foot-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, #fff, transparent);
+  animation: lineSweep 2.4s var(--ease-soft) infinite;
+}
+@keyframes lineSweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* ============================================================
+   第二屏 · 个人简介
+   ============================================================ */
+.about {
+  position: relative;
+  min-height: 100svh;
+  padding: 130px var(--gutter) 70px;
+  background:
+    radial-gradient(ellipse 65% 50% at 8% 0%, rgba(255, 90, 60, .09) 0%, transparent 58%),
+    radial-gradient(ellipse 55% 45% at 96% 96%, rgba(67, 217, 255, .07) 0%, transparent 60%),
+    var(--bg-2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 62px;
+  overflow: hidden;
+}
+.about::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+.about__inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 72px;
+  align-items: center;
+}
+
+/* --- 头像 --- */
+.about__side { position: relative; }
+
+.portrait { position: relative; }
+
+.portrait__frame {
+  position: relative;
+  aspect-ratio: 1 / 1.16;
+  border-radius: 22px;
+  overflow: hidden;
+  background: #f4f4f2;
+  border: 1px solid var(--line);
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .55);
+  transition: transform .7s var(--ease), box-shadow .7s var(--ease), border-color .5s;
+}
+.portrait:hover .portrait__frame {
+  transform: translateY(-8px) scale(1.02);
+  border-color: var(--line-strong);
+  box-shadow: 0 34px 90px rgba(0, 0, 0, .68);
+}
+
+.portrait__img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  /* 构图微调：由父级 --avatar-zoom / --avatar-y 控制，默认不裁头顶 */
+  object-position: center var(--avatar-y, 12%);
+  transform: scale(var(--avatar-zoom, 1));
+  transform-origin: center var(--avatar-y, 12%);
+  z-index: 2;
+  transition: transform .7s var(--ease), object-position .4s var(--ease);
+}
+/* 图片缺失时不显示破图 */
+.portrait__img.is-missing { display: none; }
+.portrait__placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.portrait__placeholder span {
+  font-size: 104px;
+  font-weight: 900;
+  color: rgba(120, 120, 130, .16);
+  letter-spacing: .04em;
+  user-select: none;
+}
+
+/* 悬停时的光泽扫过 */
+.portrait__sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .28) 50%, transparent 62%);
+  transform: translateX(-110%);
+  transition: transform .9s var(--ease);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+.portrait:hover .portrait__sheen { transform: translateX(110%); }
+
+/* 内描边：让浅色照片在深色页面上有明确边界 */
+.portrait__frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .07),
+              inset 0 -40px 60px -50px rgba(0, 0, 0, .25);
+  pointer-events: none;
+}
+
+.portrait__tag {
+  position: absolute;
+  left: 18px; bottom: -18px;
+  z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 100px;
+  background: rgba(14, 14, 18, .92);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--line-strong);
+  font-size: 13px;
+  color: var(--text);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  transition: transform .5s var(--ease);
+}
+.portrait:hover .portrait__tag { transform: translateY(-4px); }
+.portrait__tag-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 90, 60, .2);
+  animation: dotPulse 2.4s ease-in-out infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .5; transform: scale(.82); }
+}
+
+/* --- 右侧文字 --- */
+.about__main { max-width: 760px; }
+
+.about__name {
+  /* 与首页刊头同一套黑体（900），全站标题保持一种字体气质 */
+  font-family: 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC',
+               'Microsoft YaHei', 'SimHei', sans-serif;
+  font-size: clamp(2.8rem, 6.4vw, 4.6rem);
+  font-weight: 900;
+  letter-spacing: -.02em;
+  line-height: 1.08;
+  margin-bottom: 18px;
+  background: linear-gradient(120deg, #fff 0%, #fff 55%, rgba(255, 255, 255, .55) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.about__sub {
+  font-size: clamp(1rem, 1.7vw, 1.16rem);
+  color: var(--text);
+  font-weight: 500;
+  padding-left: 18px;
+  border-left: 2px solid var(--accent);
+  margin-bottom: 28px;
+  line-height: 1.65;
+}
+
+.about__bio p {
+  font-size: clamp(.96rem, 1.5vw, 1.05rem);
+  color: var(--text-soft);
+  line-height: 1.95;
+  max-width: 40em;
+}
+.about__bio em {
+  color: #fff;
+  font-weight: 500;
+  background: linear-gradient(180deg, transparent 62%, rgba(255, 90, 60, .3) 62%);
+  padding: 0 2px;
+}
+
+/* ============================================================
+   四个数据板块
+   ============================================================ */
+.stats {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.stat-card {
+  position: relative;
+  padding: 28px 24px 26px;
+  border-radius: 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  overflow: hidden;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 226px;
+  transform-origin: center;
+  will-change: transform;
+  transition:
+    transform .5s var(--ease),
+    border-color .45s var(--ease),
+    background-color .45s var(--ease),
+    box-shadow .5s var(--ease);
+}
+
+/* 悬停：轻微放大 + 上浮 + 光晕 */
+.stat-card:hover,
+.stat-card:focus-visible {
+  transform: translateY(-10px) scale(1.035);
+  background: var(--surface-hover);
+  border-color: rgba(255, 90, 60, .42);
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, .5),
+    0 0 0 1px rgba(255, 90, 60, .12),
+    0 0 46px -8px var(--accent-glow);
+  outline: none;
+}
+.stat-card:active { transform: translateY(-4px) scale(1.01); }
+
+/* 顶部线性高光 */
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+}
+.stat-card:hover::before { opacity: .85; }
+
+.stat-card__glow {
+  position: absolute;
+  top: -60%; right: -40%;
+  width: 200px; height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, transparent 68%);
+  opacity: 0;
+  transition: opacity .6s var(--ease);
+  pointer-events: none;
+}
+.stat-card:hover .stat-card__glow { opacity: .5; }
+
+.stat-card__top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.stat-card__num {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.04em;
+  font-variant-numeric: tabular-nums;
+  /* 四张卡的主标题统一用同一条橙红渐变（原来只有第四张卡的 AI 是彩色）：
+     这一屏的环境是亮云，原来的白色渐变（#fff → rgba(255,255,255,.68)）
+     压在云上几乎没有对比，"2 段 / 6 项 / 3 项"看着是空的，只有 AI 那格很跳。
+     统一成 accent 渐变后四个标题同级，也终于在云上看得清。 */
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform .5s var(--ease);
+}
+/* "段 / 项" 这个单位原本是 rgba(245, 245, 247, .38) 的近白，改色后同样看不见，
+   换成 accent 深一档的纯色，与数字靠字号拉开主次。 */
+.stat-card__num span {
+  font-size: 16px;
+  font-weight: 500;
+  margin-left: 3px;
+  -webkit-text-fill-color: var(--accent);
+}
+/* 第四张卡的 AI 只差字号：渐变已由 .stat-card__num 统一给出 */
+.stat-card__num--text {
+  font-size: 38px;
+}
+.stat-card:hover .stat-card__num { transform: scale(1.06); }
+
+.stat-card__badge {
+  font-size: 11px;
+  letter-spacing: .1em;
+  color: var(--text-faint);
+  padding: 4px 10px;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  white-space: nowrap;
+  transition: color .4s, border-color .4s;
+}
+.stat-card:hover .stat-card__badge {
+  color: var(--accent);
+  border-color: rgba(255, 90, 60, .38);
+}
+
+.stat-card__title {
+  font-size: 16.5px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: #fff;
+}
+
+.stat-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  flex: 1;
+}
+.stat-card__list li {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-soft);
+  padding-left: 15px;
+  position: relative;
+  transition: color .35s var(--ease), transform .45s var(--ease);
+}
+.stat-card__list li::before {
+  content: '';
+  position: absolute;
+  left: 0; top: .62em;
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  background: var(--line-strong);
+  transition: background-color .35s, transform .35s;
+}
+.stat-card:hover .stat-card__list li { color: rgba(245, 245, 247, .82); }
+.stat-card:hover .stat-card__list li::before {
+  background: var(--accent);
+  transform: scale(1.25);
+}
+.stat-card:hover .stat-card__list li:nth-child(1) { transform: translateX(2px); }
+.stat-card:hover .stat-card__list li:nth-child(2) { transform: translateX(4px); }
+.stat-card:hover .stat-card__list li:nth-child(3) { transform: translateX(6px); }
+.stat-card:hover .stat-card__list li:nth-child(4) { transform: translateX(8px); }
+
+.stat-card__arrow {
+  position: absolute;
+  top: 22px; right: 22px;
+  width: 18px; height: 18px;
+  opacity: 0;
+  color: var(--accent);
+  transform: translate(-4px, 4px);
+  transition: opacity .45s var(--ease), transform .45s var(--ease);
+}
+.stat-card__arrow svg { width: 100%; height: 100%; }
+.stat-card:hover .stat-card__arrow {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* 第二屏底部 */
+.about__foot {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 12px;
+  letter-spacing: .2em;
+  color: var(--text-faint);
+}
+.about__foot-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+/* ============================================================
+   进场动画
+   ============================================================ */
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity .9s var(--ease), transform .9s var(--ease);
+}
+.reveal.is-visible { opacity: 1; transform: none; }
+
+/* 首屏文字逐行上浮 */
+.hero__title-line > span,
+.hero__title-line--sub > span {
+  transform: translateY(110%);
+  animation: riseIn 1.15s var(--ease) forwards;
+}
+.hero__title-line > span { animation-delay: .18s; }
+.hero__title-line--sub > span { animation-delay: .36s; }
+@keyframes riseIn {
+  to { transform: translateY(0); }
+}
+
+.hero__roles,
+.explore,
+.hero__foot {
+  opacity: 0;
+  animation: fadeUp 1.1s var(--ease) forwards;
+}
+.hero__roles { animation-delay: .75s; }
+.explore { animation-delay: .95s; }
+.hero__foot { animation-delay: 1.25s; }
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.hero__roles { animation-name: fadeUpRoles; }
+@keyframes fadeUpRoles {
+  from { opacity: 0; transform: translateY(calc(-50% + 18px)); }
+  to { opacity: 1; transform: translateY(-50%); }
+}
+.hero__foot { animation-name: fadeUpFoot; }
+@keyframes fadeUpFoot {
+  from { opacity: 0; transform: translate(-50%, 18px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ============================================================
+   响应式
+   ============================================================ */
+@media (max-width: 1080px) {
+  :root { --gutter: 36px; }
+  .about__inner { grid-template-columns: 260px 1fr; gap: 48px; }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .hero__roles { top: auto; bottom: 96px; transform: none; }
+  .hero__roles { animation-name: fadeUp; }
+}
+
+@media (max-width: 760px) {
+  :root { --gutter: 22px; }
+
+  .nav__links {
+    position: fixed;
+    top: 0; right: 0;
+    height: 100svh;
+    width: min(76vw, 300px);
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 34px;
+    background: rgba(10, 10, 14, .97);
+    backdrop-filter: blur(20px);
+    border-left: 1px solid var(--line);
+    transform: translateX(100%);
+    transition: transform .5s var(--ease);
+  }
+  .nav__links.is-open { transform: none; }
+  .nav__link { font-size: 19px; padding: 14px 0; }
+  .nav__link::after { display: none; }
+  .nav__burger { display: flex; z-index: 102; }
+
+  .hero__roles {
+    position: static;
+    transform: none;
+    animation: fadeUp 1.1s var(--ease) .75s forwards;
+    flex-direction: row;
+    flex-wrap: wrap;
+    /* 钉死宽度：父级是 align-items:center 的 flex，
+       不写宽度的话这个容器会收缩成 max-content，
+       flex-wrap 永远等不到约束、角色词多起来就直接顶出屏幕右边。 */
+    width: 100%;
+    justify-content: center;
+    gap: 0 10px;
+    margin-bottom: 6px;
+  }
+  .hero__center { padding-top: 60px; }
+  .role__sep { display: inline; color: var(--text-faint); font-size: 13px; }
+  .role::before { display: none; }
+  .role:hover { transform: none; }
+
+  .hero__title { margin-bottom: 40px; }
+  .hero__title-line--sub { padding-top: 40px; }
+  .hero__title-line--sub::before { top: 13px; width: 128px; height: 11px; margin-left: -64px; }
+  .hero__title-line--sub > span { letter-spacing: .24em; text-indent: .24em; }
+
+  .about { padding: 106px var(--gutter) 56px; gap: 46px; }
+  .about__inner { grid-template-columns: 1fr; gap: 46px; text-align: left; }
+  .about__side { max-width: 260px; }
+  .portrait__tag { left: 14px; }
+  .stats { grid-template-columns: 1fr; gap: 16px; }
+  .stat-card { min-height: auto; padding: 24px 22px; }
+  .stat-card:hover { transform: translateY(-6px) scale(1.02); }
+  .about__foot { flex-wrap: wrap; gap: 10px; }
+}
+
+@media (max-width: 420px) {
+  .hero__title-name { letter-spacing: .04em; text-indent: .04em; }
+  .hero__title-line--sub::before { width: 108px; height: 9px; margin-left: -54px; }
+  .hero__title-line--sub > span { font-size: .9rem; letter-spacing: .2em; text-indent: .2em; }
+  .stat-card__num { font-size: 38px; }
+  .portrait__placeholder span { font-size: 80px; }
+}
+
+/* 不支持 svh 的老浏览器回退 */
+@supports not (min-height: 100svh) {
+  .hero, .about { min-height: 100vh; }
+}
+
+/* 降低动效 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .reveal { opacity: 1; transform: none; }
+  .hero__title-line > span,
+  .hero__title-line--sub > span { transform: none; }
+  .hero__roles, .explore, .hero__foot { opacity: 1; }
+}
+
+/* ============================================================
+   第三屏 · 新媒体作品案例
+   ============================================================ */
+.work {
+  position: relative;
+  padding: 118px 0 88px;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 45% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 60%),
+    var(--bg);
+  overflow: hidden;
+}
+.work::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* --- 标题 --- */
+.work__head {
+  max-width: var(--maxw);
+  margin: 0 auto 56px;
+  padding: 0 var(--gutter);
+}
+.work__title {
+  font-size: clamp(1.85rem, 4vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  background: linear-gradient(120deg, #fff 0%, #fff 58%, rgba(255, 255, 255, .58) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.work__title-hint {
+  font-size: .44em;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  -webkit-text-fill-color: var(--text-faint);
+  margin-left: .4em;
+  white-space: nowrap;
+}
+.work__sub {
+  margin-top: 12px;
+  font-size: 14.5px;
+  color: var(--text-soft);
+}
+
+/* --- 滚动带容器 --- */
+.marquee {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+}
+
+.marquee__row { overflow: hidden; }
+
+.marquee__viewport {
+  overflow: hidden;
+  /* 两端渐隐，避免卡片硬切 */
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(90deg, transparent 0, #000 6%, #000 94%, transparent 100%);
+}
+
+.marquee__track {
+  display: flex;
+  gap: 22px;
+  width: max-content;
+  will-change: transform;
+}
+/* JS 未接管时的兜底：纯 CSS 缓慢滚动 */
+.marquee__track[data-direction="left"] {
+  animation: marqueeLeft 68s linear infinite;
+}
+.marquee__track[data-direction="right"] {
+  animation: marqueeRight 68s linear infinite;
+}
+@keyframes marqueeLeft {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes marqueeRight {
+  from { transform: translate3d(-50%, 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+/* JS 接管后移除 CSS 动画，改由 rAF 驱动（可拖动/可暂停） */
+.marquee__track.is-js { animation: none; }
+.marquee__track.is-paused { animation-play-state: paused; }
+
+/* --- 作品卡片 --- */
+.work-card {
+  flex: 0 0 auto;
+  width: 372px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  text-align: left;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  transition: transform .5s var(--ease);
+}
+.work-card:hover { transform: translateY(-8px); }
+.work-card:focus-visible { outline: none; }
+.work-card:focus-visible .work-card__media {
+  box-shadow: 0 0 0 2px var(--accent), 0 20px 50px rgba(0, 0, 0, .5);
+}
+
+/* 16:9 画面框 */
+.work-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  transition: box-shadow .5s var(--ease), border-color .4s var(--ease);
+}
+.work-card:hover .work-card__media {
+  border-color: rgba(255, 90, 60, .4);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .55), 0 0 40px -10px var(--accent-glow);
+}
+
+/* 封面层 */
+.work-card__cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+/* 有真实图片时（用户放入 assets/covers/work-xx.jpg）优先显示 */
+.work-card__cover img {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+}
+
+/* --- 16 种封面配色 --- */
+.work-card__cover--1  { background: linear-gradient(135deg, #1b3a8f 0%, #2f6bd8 100%); }
+.work-card__cover--2  { background: linear-gradient(135deg, #2b1d3d 0%, #5a3766 100%); }
+.work-card__cover--3  { background: linear-gradient(135deg, #d94f2b 0%, #f0954a 100%); }
+.work-card__cover--4  { background: linear-gradient(135deg, #0f4a3c 0%, #1f8a6a 100%); }
+.work-card__cover--5  { background: linear-gradient(135deg, #131a3a 0%, #3b2a6b 100%); }
+.work-card__cover--6  { background: linear-gradient(135deg, #8a5a1f 0%, #d99b3a 100%); }
+.work-card__cover--7  { background: linear-gradient(135deg, #1a3f5c 0%, #2e7fa8 100%); }
+.work-card__cover--8  { background: linear-gradient(135deg, #3a2a1f 0%, #6b4a32 100%); }
+.work-card__cover--9  { background: linear-gradient(135deg, #6b1f3a 0%, #a83a5c 100%); }
+.work-card__cover--10 { background: linear-gradient(135deg, #123f5c 0%, #2a8aa8 100%); }
+.work-card__cover--11 { background: linear-gradient(135deg, #2a1f5c 0%, #5a3aa8 100%); }
+.work-card__cover--12 { background: linear-gradient(135deg, #4a3520 0%, #8a6640 100%); }
+.work-card__cover--13 { background: linear-gradient(135deg, #1f3a2a 0%, #3a7a55 100%); }
+.work-card__cover--14 { background: linear-gradient(135deg, #143a4a 0%, #2a7a8a 100%); }
+.work-card__cover--15 { background: linear-gradient(135deg, #2a2a3a 0%, #5a5a7a 100%); }
+.work-card__cover--16 { background: linear-gradient(135deg, #7a2a1f 0%, #d9783a 100%); }
+
+/* 封面内的抽象图形 */
+.cover-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  z-index: 1;
+}
+.work-card__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 60% at 50% 45%, transparent 40%, rgba(0, 0, 0, .35) 100%);
+  z-index: 1;
+}
+
+/* 1 省钱锦囊：两个胶囊标签 */
+.cover-art--tag { flex-direction: column; gap: 10px; }
+.cover-art--tag i {
+  font-size: 19px;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: .1em;
+  color: rgba(255, 255, 255, .94);
+  padding: 7px 20px;
+  border: 1.5px solid rgba(255, 255, 255, .5);
+  border-radius: 100px;
+  background: rgba(255, 255, 255, .1);
+  backdrop-filter: blur(4px);
+}
+.cover-art--tag i:last-child { transform: translateX(16px); }
+
+/* 2 微电影归途：三格胶片 */
+.cover-art--film { gap: 7px; }
+.cover-art--film i {
+  width: 46px; height: 62px;
+  border: 1.5px solid rgba(255, 255, 255, .42);
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .07);
+}
+.cover-art--film i:nth-child(2) { height: 78px; background: rgba(255, 255, 255, .16); }
+
+/* 3 快乐BGM：声波柱 */
+.cover-art--wave { align-items: center; gap: 6px; }
+.cover-art--wave i {
+  width: 7px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, .9);
+}
+.cover-art--wave i:nth-child(1) { height: 22px; }
+.cover-art--wave i:nth-child(2) { height: 44px; }
+.cover-art--wave i:nth-child(3) { height: 68px; }
+.cover-art--wave i:nth-child(4) { height: 44px; }
+.cover-art--wave i:nth-child(5) { height: 22px; }
+
+/* 4 农商银行：建筑柱式 */
+.cover-art--bank { gap: 12px; align-items: flex-end; }
+.cover-art--bank i {
+  width: 26px; height: 66px;
+  background: rgba(255, 255, 255, .32);
+  border-radius: 3px 3px 0 0;
+}
+.cover-art--bank i:nth-child(2) { height: 82px; background: rgba(255, 255, 255, .55); }
+.cover-art--bank::before {
+  content: '';
+  position: absolute;
+  top: -12px; left: 50%;
+  transform: translateX(-50%);
+  width: 84px; height: 4px;
+  background: rgba(255, 255, 255, .6);
+  border-radius: 2px;
+}
+
+/* 5 未来之境：轨道环 */
+.cover-art--orbit i {
+  width: 82px; height: 82px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, .5);
+  position: relative;
+}
+.cover-art--orbit i::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 26px; height: 26px;
+  margin: -13px 0 0 -13px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 255, 255, .2) 70%);
+  box-shadow: 0 0 26px rgba(255, 255, 255, .6);
+}
+
+/* 6 校园十二时辰：时钟 */
+.cover-art--clock i {
+  width: 74px; height: 74px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, .62);
+  position: relative;
+}
+.cover-art--clock i::before,
+.cover-art--clock i::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  background: rgba(255, 255, 255, .92);
+  transform-origin: 0 0;
+  border-radius: 2px;
+}
+.cover-art--clock i::before { width: 2px; height: 24px; transform: rotate(0deg) translate(-1px, -24px); }
+.cover-art--clock i::after  { width: 2px; height: 17px; transform: rotate(115deg) translate(-1px, -17px); }
+
+/* 7 开学第一课：翻开的书 */
+.cover-art--book { gap: 0; perspective: 200px; }
+.cover-art--book i {
+  width: 42px; height: 56px;
+  background: rgba(255, 255, 255, .26);
+  border: 1.5px solid rgba(255, 255, 255, .5);
+}
+.cover-art--book i:first-child { border-radius: 4px 0 0 4px; transform: skewY(-5deg); }
+.cover-art--book i:last-child { border-radius: 0 4px 4px 0; transform: skewY(5deg); }
+
+/* 8 手艺：双手/工具 */
+.cover-art--hand i {
+  width: 64px; height: 64px;
+  border: 1.5px solid rgba(255, 255, 255, .5);
+  border-radius: 50% 50% 50% 8px;
+  transform: rotate(-45deg);
+  position: relative;
+}
+.cover-art--hand i::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 50% 50% 50% 4px;
+  background: rgba(255, 255, 255, .24);
+}
+
+/* 9 新东方课堂：黑板+讲台 */
+.cover-art--class { flex-direction: column; gap: 12px; }
+.cover-art--class i {
+  width: 108px; height: 56px;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, .2);
+  border: 1.5px solid rgba(255, 255, 255, .48);
+}
+.cover-art--class i:last-child { width: 62px; height: 14px; border-radius: 3px; }
+
+/* 10 波澜：水波纹 */
+.cover-art--ripple { flex-direction: column; gap: -6px; }
+.cover-art--ripple i {
+  border: 1.5px solid rgba(255, 255, 255, .48);
+  border-radius: 50%;
+  height: 14px;
+}
+.cover-art--ripple i:nth-child(1) { width: 44px; }
+.cover-art--ripple i:nth-child(2) { width: 78px; }
+.cover-art--ripple i:nth-child(3) { width: 112px; }
+
+/* 11 一分钟读懂：脉冲 */
+.cover-art--pulse { gap: 9px; align-items: center; }
+.cover-art--pulse i {
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .85);
+}
+.cover-art--pulse i:nth-child(1) { width: 13px; height: 13px; }
+.cover-art--pulse i:nth-child(2) { width: 22px; height: 22px; opacity: .72; }
+.cover-art--pulse i:nth-child(3) { width: 36px; height: 36px; opacity: .45; }
+.cover-art--pulse i:nth-child(4) { width: 54px; height: 54px; opacity: .22; }
+
+/* 12 老屋：屋顶轮廓 */
+.cover-art--house i {
+  width: 0; height: 0;
+  border-left: 48px solid transparent;
+  border-right: 48px solid transparent;
+  border-bottom: 44px solid rgba(255, 255, 255, .42);
+  position: relative;
+}
+.cover-art--house i::after {
+  content: '';
+  position: absolute;
+  left: -30px; top: 44px;
+  width: 60px; height: 40px;
+  background: rgba(255, 255, 255, .22);
+}
+
+/* 13 山海：山峦 */
+.cover-art--mountain { align-items: flex-end; gap: -14px; }
+.cover-art--mountain i {
+  width: 0; height: 0;
+  border-left: 40px solid transparent;
+  border-right: 40px solid transparent;
+  border-bottom: 60px solid rgba(255, 255, 255, .3);
+}
+.cover-art--mountain i:nth-child(2) { border-bottom-color: rgba(255, 255, 255, .52); border-bottom-width: 82px; }
+.cover-art--mountain i:nth-child(3) { border-bottom-color: rgba(255, 255, 255, .2); border-bottom-width: 48px; }
+
+/* 14 校园开放日：校门 */
+.cover-art--gate i {
+  width: 96px; height: 62px;
+  border: 2px solid rgba(255, 255, 255, .55);
+  border-bottom: none;
+  border-radius: 48px 48px 0 0;
+  position: relative;
+}
+.cover-art--gate i::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 0; bottom: 0;
+  width: 2px;
+  background: rgba(255, 255, 255, .35);
+  transform: translateX(-50%);
+}
+
+/* 15 城市漫游：天际线 */
+.cover-art--city { align-items: flex-end; gap: 6px; }
+.cover-art--city i {
+  width: 22px;
+  background: rgba(255, 255, 255, .34);
+  border-radius: 3px 3px 0 0;
+}
+.cover-art--city i:nth-child(1) { height: 40px; }
+.cover-art--city i:nth-child(2) { height: 68px; background: rgba(255, 255, 255, .52); }
+.cover-art--city i:nth-child(3) { height: 54px; }
+.cover-art--city i:nth-child(4) { height: 78px; background: rgba(255, 255, 255, .44); }
+
+/* 16 锦囊妙计：星火 */
+.cover-art--spark { gap: 7px; align-items: center; }
+.cover-art--spark i {
+  background: rgba(255, 255, 255, .88);
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+.cover-art--spark i:nth-child(1) { width: 10px; height: 10px; }
+.cover-art--spark i:nth-child(2) { width: 16px; height: 16px; }
+.cover-art--spark i:nth-child(3) { width: 24px; height: 24px; }
+.cover-art--spark i:nth-child(4) { width: 16px; height: 16px; }
+.cover-art--spark i:nth-child(5) { width: 10px; height: 10px; }
+
+/* 悬停时封面图形轻微放大 */
+.work-card .cover-art { transition: transform .7s var(--ease); }
+.work-card:hover .cover-art { transform: scale(1.09); }
+
+/* 播放按钮 */
+.work-card__play {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 54px; height: 54px;
+  margin: -27px 0 0 -27px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(12, 12, 16, .6);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, .55);
+  color: #fff;
+  z-index: 3;
+  opacity: 0;
+  transform: scale(.82);
+  transition: opacity .45s var(--ease), transform .45s var(--ease), background-color .3s;
+}
+.work-card__play svg { width: 19px; height: 19px; margin-left: 2px; }
+.work-card:hover .work-card__play {
+  opacity: 1;
+  transform: scale(1);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.work-card__play::after {
+  content: '';
+  position: absolute;
+  inset: -1.5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, .45);
+  animation: playPulse 2.4s var(--ease-soft) infinite;
+}
+@keyframes playPulse {
+  0% { opacity: .8; transform: scale(1); }
+  70%, 100% { opacity: 0; transform: scale(1.55); }
+}
+
+/* 时长标签 */
+.work-card__dur {
+  position: absolute;
+  right: 11px; bottom: 11px;
+  z-index: 3;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+  padding: 3px 8px;
+  border-radius: 5px;
+  background: rgba(10, 10, 14, .72);
+  backdrop-filter: blur(6px);
+  color: rgba(255, 255, 255, .88);
+  letter-spacing: .02em;
+}
+
+/* 卡片文字 */
+.work-card__caption { display: flex; flex-direction: column; gap: 5px; }
+.work-card__name {
+  font-size: 15.5px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+  color: var(--text);
+  transition: color .35s var(--ease);
+  line-height: 1.4;
+}
+.work-card:hover .work-card__name { color: var(--accent); }
+.work-card__meta {
+  font-size: 12.5px;
+  color: var(--text-faint);
+  letter-spacing: .02em;
+}
+
+/* --- 底部提示 --- */
+.work__foot {
+  max-width: var(--maxw);
+  margin: 52px auto 0;
+  padding: 0 var(--gutter);
+  display: flex;
+  justify-content: center;
+}
+.work__foot-hint {
+  font-size: 12.5px;
+  letter-spacing: .18em;
+  color: var(--text-faint);
+  padding: 9px 20px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: var(--surface);
+}
+
+/* --- 响应式 --- */
+@media (max-width: 760px) {
+  .work { padding: 84px 0 60px; }
+  .marquee { gap: 18px; }
+  .marquee__track { gap: 15px; }
+  .work-card { width: 268px; }
+  .work-card__play { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+  .work-card__play svg { width: 16px; height: 16px; }
+  .work-card__name { font-size: 14px; }
+  .work__title-hint { display: block; margin: .3em 0 0; font-size: .5em; }
+}
+
+/* ============================================================
+   第四屏 · 实习经历（时间轴）
+   ============================================================ */
+.exp {
+  position: relative;
+  padding: 118px 0 96px;
+  background:
+    radial-gradient(ellipse 55% 40% at 85% 0%, rgba(67, 217, 255, .06) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 10% 95%, rgba(255, 90, 60, .06) 0%, transparent 60%),
+    var(--bg);
+}
+
+.exp::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* --- 标题 --- */
+.exp__head {
+  max-width: var(--maxw);
+  margin: 0 auto 64px;
+  padding: 0 var(--gutter);
+}
+.exp__title {
+  font-size: clamp(1.85rem, 4vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  background: linear-gradient(120deg, #fff 0%, #fff 58%, rgba(255, 255, 255, .58) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.exp__title-hint {
+  font-size: .44em;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  -webkit-text-fill-color: var(--text-faint);
+  margin-left: .4em;
+  white-space: nowrap;
+}
+.exp__sub {
+  margin-top: 12px;
+  font-size: 14.5px;
+  color: var(--text-soft);
+}
+
+/* --- 时间轴容器 --- */
+.exp__timeline {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+}
+
+/* --- 单条经历 --- */
+.exp-item {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr);
+  gap: 30px;
+  position: relative;
+}
+
+/* 左侧轨道 */
+.exp-item__rail {
+  position: relative;
+  padding-top: 30px;
+  padding-left: 26px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* 竖线：贯穿整条经历，最后一条渐隐收尾 */
+.exp-item__rail::before {
+  content: '';
+  position: absolute;
+  left: 6px;
+  top: 30px;
+  bottom: -34px;
+  width: 1px;
+  background: linear-gradient(180deg, var(--line-strong) 0%, var(--line) 55%, transparent 100%);
+}
+.exp-item:last-child .exp-item__rail::before {
+  background: linear-gradient(180deg, var(--line-strong) 0%, var(--line) 40%, transparent 100%);
+}
+
+/* 节点圆点 */
+.exp-item__dot {
+  position: absolute;
+  left: 0;
+  top: 36px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 2px solid var(--line-strong);
+  transition: border-color .45s var(--ease), box-shadow .45s var(--ease), transform .45s var(--ease);
+}
+/* 圆点内芯 */
+.exp-item__dot::after {
+  content: '';
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: var(--text-faint);
+  transition: background-color .45s var(--ease);
+}
+/* 最新一段（第一条）默认就是亮点 */
+.exp-item:first-child .exp-item__dot {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px rgba(255, 90, 60, .14), 0 0 22px -2px var(--accent-glow);
+}
+.exp-item:first-child .exp-item__dot::after { background: var(--accent); }
+
+.exp-item:hover .exp-item__dot {
+  transform: scale(1.18);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 5px rgba(255, 90, 60, .15), 0 0 26px -2px var(--accent-glow);
+}
+.exp-item:hover .exp-item__dot::after { background: var(--accent); }
+
+/* 时间区间 */
+.exp-item__period {
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  transition: color .45s var(--ease);
+}
+.exp-item:hover .exp-item__period { color: var(--text); }
+
+/* --- 正文卡片 --- */
+.exp-card {
+  position: relative;
+  padding: 30px 32px 32px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition:
+    transform .5s var(--ease),
+    border-color .45s var(--ease),
+    background-color .45s var(--ease),
+    box-shadow .5s var(--ease);
+}
+
+/* 悬停：轻微放大 + 上浮（沿用第二屏卡片的互动语言） */
+.exp-item:hover .exp-card {
+  transform: translateY(-6px) scale(1.008);
+  background: var(--surface-hover);
+  border-color: rgba(255, 90, 60, .3);
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, .46),
+    0 0 0 1px rgba(255, 90, 60, .1),
+    0 0 50px -12px var(--accent-glow);
+}
+
+/* 顶部线性高光 */
+.exp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  border-radius: 20px 20px 0 0;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+}
+.exp-item:hover .exp-card::before { opacity: .8; }
+
+/* --- 卡片头部：公司 / 职位 / 标签 --- */
+.exp-card__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  padding-bottom: 22px;
+  border-bottom: 1px solid var(--line);
+}
+
+.exp-card__company {
+  font-size: clamp(1.15rem, 2.1vw, 1.42rem);
+  font-weight: 700;
+  letter-spacing: -.015em;
+  color: #fff;
+  line-height: 1.3;
+}
+.exp-card__role {
+  margin-top: 7px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-soft);
+  padding-left: 12px;
+  border-left: 2px solid var(--accent);
+  line-height: 1.4;
+}
+
+.exp-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 4px;
+}
+.exp-tag {
+  font-size: 11.5px;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  padding: 5px 12px;
+  border-radius: 100px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .02);
+  white-space: nowrap;
+  transition: color .4s var(--ease), border-color .4s var(--ease), background-color .4s var(--ease);
+}
+.exp-item:hover .exp-tag {
+  color: var(--accent);
+  border-color: rgba(255, 90, 60, .3);
+  background: rgba(255, 90, 60, .06);
+}
+
+/* --- 关键数据条 --- */
+.exp-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  margin: 22px 0 26px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.exp-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 16px 18px;
+  background: var(--bg-2);
+  transition: background-color .45s var(--ease);
+}
+.exp-item:hover .exp-metric { background: rgba(255, 255, 255, .045); }
+
+.exp-metric__num {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -.03em;
+  font-variant-numeric: tabular-nums;
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  transition: transform .5s var(--ease);
+}
+.exp-metric__num span {
+  font-size: 13px;
+  font-weight: 600;
+  margin-left: 1px;
+}
+.exp-item:hover .exp-metric__num { transform: translateY(-2px); }
+
+.exp-metric__label {
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  line-height: 1.35;
+}
+
+/* --- 职责条目 --- */
+.exp-duties {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.exp-duty {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 16px;
+  padding: 16px 18px 16px 16px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  transition: background-color .45s var(--ease), border-color .45s var(--ease), transform .5s var(--ease);
+}
+.exp-duty:hover {
+  background: rgba(255, 255, 255, .035);
+  border-color: var(--line);
+  transform: translateX(4px);
+}
+
+.exp-duty__idx {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  padding-top: 3px;
+  transition: color .45s var(--ease);
+}
+.exp-duty:hover .exp-duty__idx { color: var(--accent); }
+
+.exp-duty__title {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -.005em;
+  color: #fff;
+  margin-bottom: 6px;
+}
+.exp-duty__text {
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text-soft);
+}
+.exp-duty__text em {
+  font-style: normal;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(180deg, transparent 62%, rgba(255, 90, 60, .28) 62%);
+  padding: 0 2px;
+}
+
+/* --- 底部提示 --- */
+.exp__foot {
+  max-width: var(--maxw);
+  margin: 52px auto 0;
+  padding: 0 var(--gutter);
+  display: flex;
+  justify-content: center;
+}
+.exp__foot-hint {
+  font-size: 12.5px;
+  letter-spacing: .18em;
+  color: var(--text-faint);
+  padding: 9px 20px;
+  border: 1px solid var(--line);
+  border-radius: 100px;
+  background: var(--surface);
+}
+
+/* --- 响应式 --- */
+@media (max-width: 1080px) {
+  .exp-item { grid-template-columns: 158px minmax(0, 1fr); gap: 24px; }
+  .exp-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 760px) {
+  .exp { padding: 84px 0 64px; }
+  .exp__head { margin-bottom: 44px; }
+  .exp__title-hint { display: block; margin: .3em 0 0; font-size: .5em; }
+
+  /* 窄屏：时间轴改为顶部横排，内容占满整行 */
+  .exp-item { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .exp-item__rail {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    padding: 0 0 0 22px;
+  }
+  .exp-item__rail::before {
+    top: 50%;
+    bottom: auto;
+    height: calc(100% + 34px);
+    transform: translateY(-50%);
+  }
+  .exp-item__dot { top: 50%; transform: translateY(-50%); }
+  .exp-item:hover .exp-item__dot { transform: translateY(-50%) scale(1.18); }
+
+  .exp-card { padding: 24px 20px 26px; border-radius: 16px; }
+  .exp-card__head { padding-bottom: 18px; }
+  .exp-metrics { margin: 18px 0 22px; }
+  .exp-metric { padding: 14px 14px; }
+  .exp-metric__num { font-size: 22px; }
+  .exp-duty { grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 14px 12px; }
+  .exp-duty__text { font-size: 13.5px; line-height: 1.8; }
+}
+
+@media (max-width: 420px) {
+  .exp-metrics { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ============================================================
+   抽卡展示区（实习经历 · 内容作品）
+   —— 大屏位置固定，下方卡牌竖向滚动，点卡换大屏内容
+   ============================================================ */
+.draw {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.draw__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.draw__title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: #fff;
+  padding-left: 10px;
+  border-left: 2px solid var(--accent);
+  line-height: 1.2;
+}
+.draw__hint {
+  font-size: 11.5px;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+}
+
+/* --- 大屏（固定不动，只换内容） --- */
+.draw__screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 40%, rgba(255, 255, 255, .05) 0%, transparent 70%),
+    #050507;
+  border: 1px solid var(--line);
+  transition: border-color .45s var(--ease), box-shadow .5s var(--ease);
+}
+.draw__screen.is-playing {
+  border-color: rgba(255, 90, 60, .34);
+  box-shadow: 0 0 44px -14px var(--accent-glow);
+}
+/* 三栏布局里大屏略高，配合竖排卡列 */
+.draw--side .draw__screen { aspect-ratio: 16 / 10; }
+
+.draw__video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #050507;
+  opacity: 0;
+  transition: opacity .4s var(--ease);
+}
+.draw__video.is-ready { opacity: 1; }
+
+/* 竖屏素材在横向大屏里只能占约 1/3 宽、两侧空一条黑边 ——
+   用同一条视频的模糊放大画面在底层垫满，观感统一（横屏素材会正好盖住它，看不出来）。 */
+.draw__video--bg {
+  object-fit: cover;
+  background: transparent;        /* 空着时别盖住大屏自己的暗色渐变 */
+  filter: blur(34px) saturate(1.14) brightness(.56);
+  transform: scale(1.22);         /* 补掉模糊在四边抽到画布外的透明 */
+  opacity: .88;                   /* 覆盖 .draw__video 的 opacity:0 */
+  pointer-events: none;
+}
+/* 有垫图层时，主画面必须透明 —— 否则它自带的 #050507 会把垫图整块盖掉
+   （.draw__screen 自己已有同色底，所以不垫图时也看不出差别） */
+.draw__video--bg ~ .draw__video { background: transparent; }
+
+/* 未选择 / 无视频时的占位 */
+.draw__empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-faint);
+  transition: opacity .4s var(--ease);
+}
+.draw__empty.is-hidden { opacity: 0; pointer-events: none; }
+
+.draw__empty-icon {
+  width: 40px; height: 40px;
+  opacity: .5;
+}
+.draw__empty-icon svg { width: 100%; height: 100%; }
+.draw__empty-title {
+  font-size: 12.5px;
+  letter-spacing: .06em;
+}
+
+/* 大屏底部信息条 */
+.draw__screen-bar {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 14px 11px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, .82) 100%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .4s var(--ease);
+}
+.draw__screen.is-playing .draw__screen-bar,
+.draw__screen:hover .draw__screen-bar { opacity: 1; }
+
+.draw__screen-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.draw__screen-count {
+  font-size: 11.5px;
+  letter-spacing: .08em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- 卡牌轨道（竖排滚动） --- */
+.draw__rail {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: 340px;
+  padding: 2px 8px 2px 2px;
+  scroll-snap-type: y proximity;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, .18) transparent;
+  /* 上下两端渐隐 */
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 3%, #000 94%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 3%, #000 94%, transparent 100%);
+}
+.draw__rail::-webkit-scrollbar { width: 6px; }
+.draw__rail::-webkit-scrollbar-track { background: transparent; }
+.draw__rail::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, .16);
+  border-radius: 100px;
+}
+.draw__rail::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, .3); }
+
+/* --- 单张卡牌 --- */
+.draw-card {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px 13px 13px;
+  border-radius: 13px;
+  border: 1px solid var(--line);
+  background: var(--bg-2);
+  text-align: left;
+  color: inherit;
+  scroll-snap-align: start;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    transform .42s var(--ease),
+    border-color .4s var(--ease),
+    background-color .4s var(--ease),
+    box-shadow .42s var(--ease);
+}
+
+/* 左侧编号条 */
+.draw-card__no {
+  flex: 0 0 auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+  transition: color .4s var(--ease);
+}
+
+.draw-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+.draw-card__name {
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.draw-card__meta {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.draw-card__play {
+  flex: 0 0 auto;
+  width: 24px; height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  color: var(--text-faint);
+  transition: color .4s var(--ease), border-color .4s var(--ease), background-color .4s var(--ease), transform .4s var(--ease);
+}
+.draw-card__play svg { width: 13px; height: 13px; margin-left: 1px; }
+
+/* 悬停 */
+.draw-card:hover,
+.draw-card:focus-visible {
+  transform: translateY(-3px);
+  border-color: rgba(255, 90, 60, .34);
+  background: var(--surface-hover);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .42);
+  outline: none;
+}
+.draw-card:hover .draw-card__no { color: var(--accent); }
+.draw-card:hover .draw-card__play {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+  transform: scale(1.08);
+}
+
+/* 选中态：抽卡抽中的那张 */
+.draw-card.is-active {
+  border-color: var(--accent);
+  background: rgba(255, 90, 60, .075);
+  box-shadow: 0 0 0 1px rgba(255, 90, 60, .2), 0 10px 28px -8px var(--accent-glow);
+}
+.draw-card.is-active .draw-card__no { color: var(--accent); }
+.draw-card.is-active .draw-card__name { color: #fff; }
+.draw-card.is-active .draw-card__play {
+  color: #fff;
+  border-color: var(--accent);
+  background: var(--accent);
+}
+/* 选中态左侧强调条 */
+.draw-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 2px;
+  height: 0;
+  background: var(--accent);
+  border-radius: 0 2px 2px 0;
+  transform: translateY(-50%);
+  transition: height .42s var(--ease);
+}
+.draw-card.is-active::before { height: 62%; }
+
+/* 抽中瞬间的高亮动画 */
+.draw-card.is-drawn { animation: drawPop .5s var(--ease); }
+@keyframes drawPop {
+  0%   { transform: translateY(0) scale(1); }
+  35%  { transform: translateY(-5px) scale(1.035); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+/* --- 三栏布局：时间轴 | 经历文字卡 | 抽卡展示区 --- */
+.exp-item--3col {
+  grid-template-columns: 170px minmax(0, 1.05fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.exp-card--compact { padding: 24px 24px 26px; }
+.exp-metrics--2col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.draw--side { margin-top: 0; padding-top: 0; border-top: none; }
+
+/* --- 响应式 --- */
+@media (max-width: 1200px) {
+  .exp-item--3col { grid-template-columns: 150px minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+}
+
+@media (max-width: 1080px) {
+  /* 三栏退化为两栏：抽卡区落到文字卡下方 */
+  .exp-item--3col { grid-template-columns: 150px minmax(0, 1fr); }
+  .exp-item--3col .draw--side { grid-column: 2; margin-top: 6px; }
+}
+
+@media (max-width: 760px) {
+  .exp-item--3col { grid-template-columns: minmax(0, 1fr); }
+  .exp-item--3col .draw--side { grid-column: 1; }
+  .draw { margin-top: 24px; padding-top: 20px; }
+  .draw__hint { display: none; }
+  .draw-card { padding: 12px; }
+  .draw-card__name { font-size: 13px; }
+}
+
+@media (max-width: 420px) {
+  .draw-card__play { width: 22px; height: 22px; }
+}
+
+/* ============================================================
+   第五屏 · 项目作品（沁湖电影工作室）
+   —— 底部 6 个作品，悬停微放大 + 鼠标跟随 3D 倾斜
+   ============================================================ */
+.proj {
+  position: relative;
+  padding: 118px 0 96px;
+  background:
+    radial-gradient(ellipse 60% 42% at 12% 0%, rgba(67, 217, 255, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 55% 45% at 92% 100%, rgba(255, 90, 60, .06) 0%, transparent 62%),
+    var(--bg-2);
+  overflow: hidden;
+}
+.proj::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* --- 标题 --- */
+.proj__head {
+  max-width: var(--maxw);
+  margin: 0 auto 46px;
+  padding: 0 var(--gutter);
+}
+.proj__title {
+  font-size: clamp(1.85rem, 4vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  background: linear-gradient(120deg, #fff 0%, #fff 58%, rgba(255, 255, 255, .58) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.proj__title-hint {
+  font-size: .44em;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  -webkit-text-fill-color: var(--text-faint);
+  margin-left: .4em;
+  white-space: nowrap;
+}
+
+/* --- 项目介绍：左职责 + 右成果 --- */
+.proj__intro {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+  gap: 34px;
+  align-items: center;
+}
+
+.proj__eyebrow {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  padding-left: 11px;
+  position: relative;
+}
+.proj__eyebrow::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 3px; height: 12px;
+  transform: translateY(-50%);
+  border-radius: 2px;
+  background: var(--cyan);
+}
+.proj__role {
+  margin-top: 10px;
+  font-size: clamp(1.5rem, 3.1vw, 2.05rem);
+  font-weight: 800;
+  letter-spacing: -.02em;
+  line-height: 1.25;
+  color: #fff;
+}
+.proj__desc {
+  margin-top: 14px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--text-soft);
+  max-width: 54ch;
+}
+.proj__desc em {
+  color: #fff;
+  font-weight: 600;
+  background: linear-gradient(transparent 62%, rgba(67, 217, 255, .28) 62%);
+  padding: 0 2px;
+}
+
+/* --- 成果数字 --- */
+.proj__results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  background: var(--line);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+}
+.proj-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 22px 20px;
+  background: var(--bg);
+  transition: background .5s var(--ease);
+}
+.proj-result:hover { background: #12121a; }
+.proj-result__num {
+  display: flex;
+  align-items: baseline;
+  font-size: clamp(1.75rem, 4vw, 2.35rem);
+  font-weight: 800;
+  letter-spacing: -.03em;
+  line-height: 1;
+  background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.proj-result__unit {
+  font-size: .5em;
+  font-weight: 700;
+  margin-left: 2px;
+}
+.proj-result__label {
+  font-size: 12.5px;
+  letter-spacing: .02em;
+  color: var(--text-faint);
+}
+
+/* --- 重点项目条 --- */
+.proj__highlight {
+  max-width: var(--maxw);
+  margin: 22px auto 0;
+  padding: 0 var(--gutter);
+}
+.proj__highlight { display: flex; }
+.proj__highlight-tag,
+.proj__highlight-text {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.proj__highlight-tag {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  color: var(--accent-2);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+}
+.proj__highlight-text {
+  flex: 1 1 auto;
+  padding: 15px 20px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-soft);
+  border-radius: 0 12px 12px 0;
+}
+/* 分隔符：项目之间的小圆点，随文字一起自然折行 */
+.proj__highlight-sep {
+  margin: 0 .6em;
+  color: var(--text-faint);
+}
+.proj__highlight-text em {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* --- 作品区：3D 舞台 --- */
+.proj__works {
+  max-width: var(--maxw);
+  margin: 54px auto 0;
+  padding: 0 var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px 24px;
+}
+
+/* --- 单张作品卡 --- */
+.proj-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --sc: 1;
+  --ty: 0px;
+  --tz: 0px;
+  position: relative;
+  /* 用 flex 而非 block：<button> 的默认内部布局会居中内容，
+     显式声明后子元素的宽度和排布才完全可控 */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  /* 3D 舞台：透视放在每张卡上，边缘卡片才不会歪得夸张 */
+  perspective: 1000px;
+  perspective-origin: 50% 50%;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.proj-card__tilt {
+  position: relative;
+  display: block;
+  width: 100%;
+  transform-style: preserve-3d;
+  transform:
+    translate3d(0, var(--ty), var(--tz))
+    rotateX(var(--rx))
+    rotateY(var(--ry))
+    scale(var(--sc));
+  transition:
+    transform .62s var(--ease),
+    filter .5s var(--ease);
+  will-change: transform;
+}
+/* 悬停时微放大 + 向观察者抬升 */
+.proj-card:hover { --sc: 1.02; --tz: 18px; --ty: -4px; }
+/* 指针移动中：缩短过渡让倾斜跟手，离场时再用长缓动回正 */
+.proj-card.is-tilting .proj-card__tilt { transition: transform .13s linear, filter .5s var(--ease); }
+
+/* 媒体框 */
+.proj-card__media {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  border-radius: 14px;
+  transform-style: preserve-3d;
+}
+
+/* 封面（唯一做裁切的地方，避免破坏 3D 上下文） */
+.proj-card__cover {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  transition: border-color .45s var(--ease);
+}
+.proj-card__cover::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 70% 62% at 50% 46%, transparent 42%, rgba(0, 0, 0, .42) 100%);
+}
+/* 悬停时封面图形轻微放大，与整体缩放叠加 */
+.proj-card .cover-art { transition: transform .8s var(--ease); }
+.proj-card:hover .cover-art { transform: scale(1.08); }
+
+/* 真实封面图：来自各视频的「标题帧」（assets/covers/proj-0X.jpg）
+   有图就盖住抽象图形；图不存在或加载失败会被 JS 移除，露出下面的兜底图形 */
+.proj-card__cover img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 2;
+  transition: transform .8s var(--ease);
+}
+.proj-card:hover .proj-card__cover img { transform: scale(1.08); }
+
+/* 6 种封面配色（比第三屏更冷、更电影感） */
+.proj-card__cover--1 { background: linear-gradient(135deg, #101a2b 0%, #2c4a72 100%); }
+.proj-card__cover--2 { background: linear-gradient(135deg, #6e1220 0%, #c42036 100%); }
+.proj-card__cover--3 { background: linear-gradient(135deg, #0b2a2f 0%, #1d6b74 100%); }
+.proj-card__cover--4 { background: linear-gradient(135deg, #0d2547 0%, #2f6bb5 100%); }
+.proj-card__cover--5 { background: linear-gradient(135deg, #191f38 0%, #4a5a94 100%); }
+.proj-card__cover--6 { background: linear-gradient(135deg, #33200f 0%, #8f5c2a 100%); }
+
+/* 论坛：麦克风（本屏专用图形） */
+.cover-art--mic { flex-direction: column; gap: 0; }
+.cover-art--mic i { background: rgba(255, 255, 255, .82); }
+.cover-art--mic i:nth-child(1) {
+  width: 24px; height: 38px;
+  border-radius: 12px;
+}
+.cover-art--mic i:nth-child(2) {
+  width: 48px; height: 24px;
+  margin-top: -18px;
+  background: none;
+  border: 3px solid rgba(255, 255, 255, .55);
+  border-top: none;
+  border-radius: 0 0 24px 24px;
+}
+.cover-art--mic i:nth-child(3) {
+  width: 3px; height: 12px;
+  margin-top: -1px;
+  background: rgba(255, 255, 255, .5);
+}
+.cover-art--mic i:nth-child(4) {
+  width: 28px; height: 3px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, .5);
+}
+
+/* 跟随鼠标的高光（只覆盖封面区，不糊到下方文字） */
+.proj-card__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 14px;
+  background: radial-gradient(circle 260px at var(--mx, 50%) var(--my, 40%),
+              rgba(255, 255, 255, .17) 0%, transparent 62%);
+  opacity: 0;
+  transition: opacity .5s var(--ease);
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* 播放按钮：浮在封面之上 38px，倾斜时产生真实景深 */
+.proj-card__play {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(12, 12, 16, .58);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1.5px solid rgba(255, 255, 255, .55);
+  color: #fff;
+  opacity: 0;
+  transform: translate(-50%, -50%) translateZ(38px) scale(.82);
+  transition: opacity .4s var(--ease), transform .5s var(--ease), background .4s var(--ease);
+  z-index: 3;
+  pointer-events: none;
+}
+.proj-card__play svg { width: 22px; height: 22px; margin-left: 2px; }
+
+/* 类型角标：浮在封面之上 26px */
+.proj-card__chip {
+  position: absolute;
+  top: 12px; left: 12px;
+  padding: 5px 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  color: #fff;
+  background: rgba(10, 10, 14, .55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, .2);
+  border-radius: 100px;
+  transform: translateZ(26px);
+  z-index: 3;
+}
+
+/* 文案 */
+.proj-card__caption {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 14px 2px 0;
+}
+.proj-card__name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: .005em;
+  color: #fff;
+  transition: color .4s var(--ease);
+}
+.proj-card__meta {
+  font-size: 12.5px;
+  letter-spacing: .03em;
+  color: var(--text-faint);
+}
+
+/* --- 悬停态 --- */
+.proj-card:hover .proj-card__cover { border-color: rgba(255, 255, 255, .3); }
+.proj-card:hover .proj-card__media::after { opacity: 1; }
+.proj-card:hover .proj-card__play {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateZ(38px) scale(1);
+  background: rgba(12, 12, 16, .72);
+}
+.proj-card:hover .proj-card__name { color: var(--accent-2); }
+
+/* 键盘聚焦时同样给出可点反馈（无鼠标也能用） */
+.proj-card:focus-visible { outline: none; }
+.proj-card:focus-visible .proj-card__cover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 90, 60, .3);
+}
+.proj-card:focus-visible .proj-card__play { opacity: 1; transform: translate(-50%, -50%) translateZ(38px) scale(1); }
+
+/* 点击回弹 */
+.proj-card:active { --sc: .985; --tz: 4px; }
+
+/* --- 底部提示 --- */
+.proj__foot {
+  max-width: var(--maxw);
+  margin: 46px auto 0;
+  padding: 0 var(--gutter);
+}
+.proj__foot-hint {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: .05em;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* --- 响应式 --- */
+@media (max-width: 1080px) {
+  .proj { padding: 96px 0 80px; }
+  .proj__intro { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .proj__works { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 26px 20px; }
+}
+
+@media (max-width: 760px) {
+  .proj { padding: 78px 0 66px; }
+  .proj__works { margin-top: 40px; gap: 22px 16px; }
+  .proj__highlight { flex-direction: column; }
+  .proj__highlight-tag {
+    padding: 7px 14px;
+    border-right: 1px solid var(--line);
+    border-bottom: none;
+    border-radius: 12px 12px 0 0;
+    justify-content: center;
+  }
+  .proj__highlight-text { border-radius: 0 0 12px 12px; font-size: 13.5px; }
+  .proj-card__play { width: 48px; height: 48px; }
+  .proj-card__play svg { width: 19px; height: 19px; }
+}
+
+@media (max-width: 520px) {
+  .proj__works { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+  .proj__results { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* 触摸设备 / 减弱动效：不倾斜，只保留一个更轻的悬停放大 */
+@media (prefers-reduced-motion: reduce) {
+  .proj-card__tilt {
+    transform: none;
+    transition: none;
+  }
+  .proj-card:hover { --sc: 1; --tz: 0px; --ty: 0px; }
+}
+
+/* ============================================================
+   第六屏 · 荣誉证书展示
+   —— 上排 6 张竖版 9:16，下排 4 张横版 4:3
+   —— 证书图片缺失时，用纯 CSS 画一张「空白证书」占位
+   ============================================================ */
+.honor {
+  position: relative;
+  padding: 118px 0 96px;
+  background:
+    radial-gradient(ellipse 58% 40% at 88% 0%, rgba(255, 161, 77, .07) 0%, transparent 62%),
+    radial-gradient(ellipse 52% 44% at 6% 100%, rgba(67, 217, 255, .05) 0%, transparent 64%),
+    var(--bg);
+  overflow: hidden;
+}
+.honor::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* --- 标题 --- */
+.honor__head {
+  max-width: var(--maxw);
+  margin: 0 auto 44px;
+  padding: 0 var(--gutter);
+}
+.honor__title {
+  font-size: clamp(1.85rem, 4vw, 2.7rem);
+  font-weight: 900;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  background: linear-gradient(120deg, #fff 0%, #fff 58%, rgba(255, 255, 255, .58) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.honor__title-hint {
+  font-size: .44em;
+  font-weight: 400;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+  -webkit-text-fill-color: var(--text-faint);
+  margin-left: .4em;
+  white-space: nowrap;
+}
+.honor__sub {
+  margin-top: 12px;
+  font-size: 14.5px;
+  color: var(--text-soft);
+  max-width: 62ch;
+}
+
+/* --- 两排：上 6 张竖版 / 下 4 张横版 --- */
+.honor__row {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: grid;
+  gap: 28px 16px;
+}
+.honor__row--portrait { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.honor__row--landscape {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin-top: 38px;
+}
+
+/* --- 单张证书卡（3D 舞台，与第五屏同一套机制） --- */
+.honor-card {
+  --rx: 0deg;
+  --ry: 0deg;
+  --sc: 1;
+  --ty: 0px;
+  --tz: 0px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  padding: 0;
+  text-align: left;
+  background: none;
+  border: none;
+  perspective: 1000px;
+  perspective-origin: 50% 50%;
+  cursor: pointer;
+}
+
+.honor-card__tilt {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  transform-style: preserve-3d;
+  transform:
+    translate3d(0, var(--ty), var(--tz))
+    rotateX(var(--rx))
+    rotateY(var(--ry))
+    scale(var(--sc));
+  transition: transform .62s var(--ease), filter .5s var(--ease);
+  will-change: transform;
+}
+/* 悬停：轻微放大 + 向观察者抬起 */
+.honor-card:hover { --sc: 1.035; --tz: 16px; --ty: -4px; }
+/* 指针移动中缩短过渡，让倾斜跟手；离场再用长缓动回正 */
+.honor-card.is-tilting .honor-card__tilt { transition: transform .13s linear, filter .5s var(--ease); }
+.honor-card:active { --sc: .99; --tz: 4px; }
+
+/* --- 证书框（唯一裁切层，保证 3D 上下文不被压平） --- */
+.honor-card__frame {
+  position: relative;
+  display: block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #f4f1e9;
+  /* 让占位证书里的字号能按卡片宽度缩放（竖版 / 横版共用一个公式） */
+  container-type: inline-size;
+  transition: border-color .45s var(--ease), box-shadow .5s var(--ease);
+}
+.honor-card--portrait .honor-card__frame { aspect-ratio: 210 / 297; }   /* A4 竖版，贴合证书原比例 */
+.honor-card--landscape .honor-card__frame { aspect-ratio: 297 / 210; }  /* A4 横版 */
+.honor-card:hover .honor-card__frame {
+  border-color: rgba(255, 255, 255, .34);
+  box-shadow: 0 16px 40px -18px rgba(0, 0, 0, .85);
+}
+
+/* --- 真实证书图片（放入 assets/certs 后自动覆盖占位图形） --- */
+.honor-card__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity .5s var(--ease), transform .85s var(--ease);
+}
+.honor-card__img[hidden] { display: none; }
+.honor-card.is-loaded .honor-card__img { opacity: 1; }
+.honor-card:hover .honor-card__img { transform: scale(1.04); }
+
+/* --- CSS 占位证书（纸面 + 奖章 + 文字行 + 印章） --- */
+.honor-card__art {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  /* 上少下多 → 内容整体略偏上，给右下角印章留位置 */
+  padding: 15% 14% 29%;
+  background:
+    radial-gradient(ellipse 100% 40% at 50% 0%, rgba(255, 255, 255, .55) 0%, transparent 72%),
+    linear-gradient(158deg, var(--paper-a, #f7f4ec) 0%, var(--paper-b, #ddd6c8) 100%);
+  transition: transform .85s var(--ease);
+}
+.honor-card:hover .honor-card__art { transform: scale(1.04); }
+/* 证书内框线 */
+.honor-card__art::before {
+  content: '';
+  position: absolute;
+  inset: 7%;
+  border: 1px solid rgba(96, 78, 56, .3);
+  border-radius: 2px;
+}
+/* 斜向纸面反光，避免大面积纯色发死 */
+.honor-card__art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(112deg, transparent 34%, rgba(255, 255, 255, .5) 48%, transparent 64%);
+  pointer-events: none;
+}
+
+/* 奖章：金盘 + 白色五角星（尺寸按卡片宽度百分比，自适应两种比例） */
+.honor-card__medal {
+  position: relative;
+  flex: 0 0 auto;
+  width: 19%;
+  min-width: 20px;
+  max-width: 42px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #ffeeb0 0%, #e6c25c 48%, #a9801f 100%);
+  box-shadow:
+    0 2px 7px rgba(120, 84, 20, .35),
+    inset 0 0 0 2px rgba(255, 255, 255, .5);
+  margin-bottom: 16px;
+}
+.honor-card__medal::after {
+  content: '';
+  position: absolute;
+  inset: 26%;
+  background: rgba(255, 255, 255, .82);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* 文字行：证书主体文案（用真实排版替代灰条，更像一张证书） */
+.honor-card__art-title {
+  font-family: "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  font-size: 20px;              /* 不支持容器查询时的兜底 */
+  font-size: 13cqw;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-indent: .16em;           /* 抵消末字后多出的一段字距 */
+  color: rgba(74, 56, 34, .84);
+  white-space: nowrap;
+  margin-bottom: 9px;
+}
+.honor-card__rule {
+  flex: 0 0 auto;
+  width: 42%;
+  height: 1px;
+  background: rgba(120, 96, 60, .42);
+  margin-bottom: 9px;
+}
+.honor-card__art-sub {
+  font-size: 7px;               /* 兜底 */
+  font-size: 3.9cqw;
+  letter-spacing: .16em;
+  text-indent: .16em;
+  text-transform: uppercase;
+  color: rgba(110, 90, 62, .6);
+  white-space: nowrap;
+}
+
+/* 右下角印章：外圈 + 五角星 */
+.honor-card__seal {
+  position: absolute;
+  right: 9%;
+  bottom: 7%;
+  width: 22%;
+  min-width: 24px;
+  max-width: 46px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 2.5px solid var(--seal, #b83a30);
+  display: grid;
+  place-items: center;
+  opacity: .85;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .35);
+}
+.honor-card__seal::after {
+  content: '';
+  width: 42%;
+  aspect-ratio: 1;
+  background: var(--seal, #b83a30);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+/* 10 种纸色 / 印章配色，避免十张证书长得一模一样 */
+.honor-card__art--c1  { --paper-a: #f7f4ec; --paper-b: #e2dbcb; --seal: #b83a30; }
+.honor-card__art--c2  { --paper-a: #f4f5f1; --paper-b: #d9ded2; --seal: #a8362d; }
+.honor-card__art--c3  { --paper-a: #f2f4f8; --paper-b: #d6dce6; --seal: #2f5fa8; }
+.honor-card__art--c4  { --paper-a: #f8f3ee; --paper-b: #e3d6c8; --seal: #b8402f; }
+.honor-card__art--c5  { --paper-a: #f5f3f0; --paper-b: #ddd8d0; --seal: #9c3a2e; }
+.honor-card__art--c6  { --paper-a: #f3f4f6; --paper-b: #d8dce2; --seal: #35618f; }
+.honor-card__art--c7  { --paper-a: #f6f4ee; --paper-b: #e0d9c9; --seal: #b0392f; }
+.honor-card__art--c8  { --paper-a: #f7f2ef; --paper-b: #e2d4cf; --seal: #a83b33; }
+.honor-card__art--c9  { --paper-a: #f1f3f7; --paper-b: #d4dae4; --seal: #2b5788; }
+.honor-card__art--c10 { --paper-a: #f6f3ec; --paper-b: #ded6c4; --seal: #ad3c2c; }
+
+/* 悬停时浮在纸面上的放大图标（translateZ 让它真的「立」起来） */
+.honor-card__zoom {
+  position: absolute;
+  top: 10px; right: 10px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(10, 10, 14, .62);
+  border: 1px solid rgba(255, 255, 255, .22);
+  color: rgba(255, 255, 255, .92);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transform: translateZ(34px) scale(.82);
+  transition: opacity .4s var(--ease), transform .45s var(--ease);
+  pointer-events: none;
+}
+.honor-card__zoom svg { width: 15px; height: 15px; }
+.honor-card:hover .honor-card__zoom,
+.honor-card:focus-visible .honor-card__zoom { opacity: 1; transform: translateZ(34px) scale(1); }
+
+/* --- 图注 --- */
+.honor-card__caption { display: block; padding: 0 2px; }
+.honor-card__name {
+  display: block;
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: rgba(245, 245, 247, .92);
+  transition: color .35s var(--ease);
+}
+.honor-card__meta {
+  display: block;
+  margin-top: 3px;
+  font-size: 11.5px;
+  letter-spacing: .02em;
+  color: var(--text-faint);
+  line-height: 1.5;
+}
+.honor-card:hover .honor-card__name { color: var(--accent-2); }
+
+/* 键盘聚焦 */
+.honor-card:focus-visible { outline: none; }
+.honor-card:focus-visible .honor-card__frame {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 90, 60, .3);
+}
+
+/* --- 底部提示 --- */
+.honor__foot {
+  max-width: var(--maxw);
+  margin: 44px auto 0;
+  padding: 0 var(--gutter);
+}
+.honor__foot-hint {
+  display: block;
+  font-size: 12.5px;
+  letter-spacing: .05em;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+/* --- 响应式 --- */
+@media (max-width: 1080px) {
+  .honor { padding: 96px 0 80px; }
+  .honor__row--portrait { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .honor__row--landscape { grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 28px; }
+}
+
+@media (max-width: 760px) {
+  .honor { padding: 78px 0 66px; }
+  .honor__row { gap: 22px 14px; }
+  .honor__row--portrait { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .honor-card__name { font-size: 12.5px; }
+  .honor-card__zoom { width: 26px; height: 26px; top: 8px; right: 8px; }
+}
+
+@media (max-width: 460px) {
+  .honor__row--landscape { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .honor-card__tilt { transform: none; transition: none; }
+  .honor-card:hover { --sc: 1; --tz: 0px; --ty: 0px; }
+}
+
+/* ============================================================
+   第七屏 · 联系我
+   —— 收尾页：邮箱 / 手机两张卡片 + 一键复制
+   ============================================================ */
+.contact {
+  position: relative;
+  padding: 128px 0 64px;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 62% 48% at 50% 0%, rgba(255, 90, 60, .1) 0%, transparent 62%),
+    radial-gradient(ellipse 46% 42% at 10% 92%, rgba(67, 217, 255, .055) 0%, transparent 64%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-2) 100%);
+}
+.contact::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--line-strong), transparent);
+}
+
+/* 顶部同心光晕 */
+.contact__glow {
+  position: absolute;
+  top: -320px;
+  left: 50%;
+  width: 900px;
+  height: 900px;
+  margin-left: -450px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 90, 60, .12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.contact__inner {
+  position: relative;
+  z-index: 1;
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* --- 标题区 --- */
+.contact__head {
+  max-width: 720px;
+  margin: 0 auto 54px;
+  text-align: center;
+}
+.contact__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: .28em;
+  text-indent: .28em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.contact__eyebrow-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  animation: dotPulse 2.4s var(--ease-soft) infinite;
+}
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .4; transform: scale(.65); }
+}
+
+.contact__title {
+  font-size: clamp(2rem, 5vw, 3.35rem);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1.16;
+  background: linear-gradient(180deg, #fff 0%, #fff 46%, rgba(255, 255, 255, .6) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.contact__title em {
+  background: linear-gradient(120deg, var(--accent) 0%, var(--accent-2) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.contact__sub {
+  margin-top: 18px;
+  font-size: 15px;
+  line-height: 1.85;
+  color: var(--text-soft);
+}
+
+/* --- 两张联系卡 --- */
+.contact__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.contact-card {
+  --c: var(--accent);
+  --c-soft: rgba(255, 90, 60, .48);
+  --c-glow: rgba(255, 90, 60, .22);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 26px 28px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: linear-gradient(150deg, rgba(255, 255, 255, .055) 0%, rgba(255, 255, 255, .014) 100%);
+  transition:
+    transform .5s var(--ease),
+    border-color .45s var(--ease),
+    box-shadow .55s var(--ease),
+    background .45s var(--ease);
+}
+.contact-card--phone {
+  --c: var(--cyan);
+  --c-soft: rgba(67, 217, 255, .46);
+  --c-glow: rgba(67, 217, 255, .18);
+}
+.contact-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--c-soft);
+  background: linear-gradient(150deg, rgba(255, 255, 255, .08) 0%, rgba(255, 255, 255, .022) 100%);
+  box-shadow: 0 22px 54px -20px var(--c-glow), 0 2px 10px rgba(0, 0, 0, .3);
+}
+
+.contact-card__icon {
+  flex: none;
+  width: 54px; height: 54px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .05);
+  color: var(--c);
+  transition:
+    transform .5s var(--ease),
+    border-color .45s var(--ease),
+    background .45s var(--ease),
+    box-shadow .5s var(--ease);
+}
+.contact-card__icon svg { width: 25px; height: 25px; }
+.contact-card:hover .contact-card__icon {
+  transform: translateY(-2px) scale(1.06);
+  border-color: var(--c-soft);
+  background: rgba(255, 255, 255, .085);
+  box-shadow: 0 10px 26px -10px var(--c-glow);
+}
+
+.contact-card__body {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-right: 34px;
+}
+.contact-card__label {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}
+.contact-card__value {
+  font-size: clamp(1.02rem, 2vw, 1.4rem);
+  font-weight: 600;
+  letter-spacing: .002em;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color .35s var(--ease);
+}
+.contact-card--phone .contact-card__value {
+  letter-spacing: .07em;
+  font-variant-numeric: tabular-nums;
+}
+.contact-card__value:hover { color: var(--c); }
+.contact-card__value:focus-visible {
+  outline: 2px solid var(--c);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.contact-card__hint {
+  margin-top: 3px;
+  font-size: 12px;
+  color: var(--text-faint);
+  transition: color .4s var(--ease);
+}
+.contact-card:hover .contact-card__hint { color: var(--text-soft); }
+
+/* --- 一键复制按钮 --- */
+.contact-card__copy {
+  position: absolute;
+  top: 14px; right: 14px;
+  width: 34px; height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, .03);
+  color: var(--text-faint);
+  opacity: .5;
+  transition:
+    opacity .4s var(--ease),
+    color .35s var(--ease),
+    border-color .35s var(--ease),
+    background .35s var(--ease),
+    transform .4s var(--ease);
+}
+.contact-card:hover .contact-card__copy,
+.contact-card__copy:focus-visible { opacity: 1; }
+.contact-card__copy:hover {
+  color: var(--c);
+  border-color: var(--c-soft);
+  background: rgba(255, 255, 255, .08);
+  transform: scale(1.06);
+}
+.contact-card__copy:active { transform: scale(.94); }
+.contact-card__copy svg {
+  position: absolute;
+  width: 17px; height: 17px;
+  transition: opacity .3s var(--ease), transform .4s var(--ease);
+}
+.contact-card__check { opacity: 0; transform: scale(.55); }
+.contact-card__copy.is-copied {
+  color: #3ddc84;
+  border-color: rgba(61, 220, 132, .45);
+  background: rgba(61, 220, 132, .1);
+  opacity: 1;
+}
+.contact-card__copy.is-copied .contact-card__copy-icon { opacity: 0; transform: scale(.55); }
+.contact-card__copy.is-copied .contact-card__check { opacity: 1; transform: none; }
+
+/* --- 页脚 --- */
+.contact__foot {
+  max-width: 960px;
+  margin: 60px auto 0;
+  padding-top: 26px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.contact__copy {
+  font-size: 12.5px;
+  letter-spacing: .04em;
+  color: var(--text-faint);
+}
+.contact__top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  font-size: 12.5px;
+  letter-spacing: .06em;
+  color: var(--text-soft);
+  transition:
+    color .35s var(--ease),
+    border-color .35s var(--ease),
+    background .35s var(--ease);
+}
+.contact__top svg {
+  width: 14px; height: 14px;
+  transition: transform .45s var(--ease);
+}
+.contact__top:hover {
+  color: #fff;
+  border-color: var(--accent);
+  background: rgba(255, 90, 60, .08);
+}
+.contact__top:hover svg { transform: translateY(-3px); }
+
+/* --- 署名 + 站点二维码 --- */
+.signboard {
+  max-width: 960px;
+  margin: 54px auto 0;
+  padding: 26px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+}
+.signboard__qr {
+  flex: 0 0 auto;
+  width: 150px;
+  height: 150px;
+  padding: 11px;
+  border-radius: 14px;
+  /* 二维码固定白底：深色卡片上仍要保证扫码识别率 */
+  background: #fff;
+  box-shadow: 0 14px 30px -18px rgba(0, 0, 0, .85);
+}
+.signboard__qr img { display: block; width: 100%; height: 100%; }
+.signboard__body { min-width: 0; }
+.signboard__eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: var(--accent-2);
+}
+.signboard__dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent-2);
+  box-shadow: 0 0 0 4px rgba(255, 161, 77, .14);
+}
+.signboard__name {
+  margin-top: 11px;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: .02em;
+  color: #fff;
+}
+.signboard__roles {
+  margin-top: 7px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+.signboard__link {
+  display: inline-block;
+  margin-top: 13px;
+  font-size: 12.5px;
+  letter-spacing: .01em;
+  color: var(--accent);
+  text-decoration: none;
+  word-break: break-all;
+  border-bottom: 1px solid rgba(255, 90, 60, .35);
+  transition: color .35s var(--ease), border-color .35s var(--ease);
+}
+.signboard__link:hover { color: #fff; border-color: rgba(255, 255, 255, .5); }
+.signboard__hint {
+  margin-top: 11px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+@media (max-width: 760px) {
+  .signboard {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+    padding: 24px 20px;
+    margin-top: 40px;
+  }
+  .signboard__eyebrow { justify-content: center; }
+}
+
+/* --- 复制提示（Toast） --- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 42px;
+  z-index: 120;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 12px 20px;
+  border-radius: 999px;
+  border: 1px solid var(--line-strong);
+  background: rgba(20, 20, 25, .88);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  color: var(--text);
+  font-size: 13.5px;
+  letter-spacing: .02em;
+  box-shadow: 0 20px 48px rgba(0, 0, 0, .55);
+  opacity: 0;
+  transform: translate(-50%, 18px) scale(.96);
+  pointer-events: none;
+  transition: opacity .35s var(--ease), transform .45s var(--ease);
+}
+.toast.is-show { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.toast svg { width: 16px; height: 16px; color: #3ddc84; flex: none; }
+
+/* --- 响应式 --- */
+@media (max-width: 900px) {
+  .contact { padding: 104px 0 56px; }
+  .contact__cards { grid-template-columns: minmax(0, 1fr); max-width: 520px; }
+  .contact__head { margin-bottom: 42px; }
+}
+
+@media (max-width: 760px) {
+  .contact { padding: 88px 0 48px; }
+  .contact__glow { width: 620px; height: 620px; margin-left: -310px; top: -240px; }
+  .contact__sub br { display: none; }
+}
+
+@media (max-width: 520px) {
+  .contact-card { padding: 22px 20px; gap: 15px; border-radius: 16px; }
+  .contact-card__icon { width: 46px; height: 46px; border-radius: 13px; }
+  .contact-card__icon svg { width: 22px; height: 22px; }
+  .contact-card__body { padding-right: 30px; }
+  .contact-card__value { font-size: 1.02rem; }
+  .contact__foot { flex-direction: column; align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .contact__eyebrow-dot { animation: none; }
+  .contact-card:hover { transform: none; }
+  .contact-card__copy { opacity: 1; }
+}
+
+/* ============================================================
+   视频 / 证书图片 弹层
+   ============================================================ */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .4s var(--ease), visibility .4s;
+}
+.lightbox.is-open { opacity: 1; visibility: visible; }
+
+.lightbox__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 4, 7, .86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+}
+
+.lightbox__panel {
+  position: relative;
+  width: min(960px, 100%);
+  background: rgba(18, 18, 24, .96);
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, .8);
+  transform: translateY(22px) scale(.97);
+  transition: transform .5s var(--ease);
+}
+.lightbox.is-open .lightbox__panel { transform: none; }
+
+.lightbox__close {
+  position: absolute;
+  top: 14px; right: 14px;
+  z-index: 5;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  display: grid; place-items: center;
+  background: rgba(10, 10, 14, .7);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--line-strong);
+  color: var(--text-soft);
+  transition: all .3s var(--ease);
+}
+.lightbox__close svg { width: 17px; height: 17px; }
+.lightbox__close:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  transform: rotate(90deg);
+}
+
+.lightbox__stage {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  background: #000;
+}
+.lightbox__video {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  background: #000;
+}
+.lightbox__video[hidden] { display: none; }
+
+/* --- 证书图片模式 --- */
+.lightbox__image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #0b0b0f;
+}
+.lightbox__image[hidden] { display: none; }
+
+/* 打开的是证书时：舞台改为「按图片自然高度撑开」，不再锁 16:9 */
+.lightbox.is-image .lightbox__panel { width: min(680px, 100%); }
+.lightbox.is-image .lightbox__stage {
+  aspect-ratio: auto;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: #0b0b0f;
+}
+.lightbox.is-image .lightbox__image {
+  position: static;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: min(66vh, 640px);
+  border-radius: 8px;
+  object-fit: contain;
+  box-shadow: 0 18px 50px -20px rgba(0, 0, 0, .9);
+}
+/* 图标按模式切换 */
+.lightbox__icon-image { display: none; }
+.lightbox.is-image .lightbox__icon-video { display: none; }
+.lightbox.is-image .lightbox__icon-image { display: block; }
+
+.lightbox__empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  text-align: center;
+  padding: 24px;
+  background:
+    radial-gradient(ellipse 60% 60% at 50% 40%, rgba(255, 90, 60, .12) 0%, transparent 65%),
+    #0b0b0f;
+}
+.lightbox__empty[hidden] { display: none; }
+.lightbox__empty-icon {
+  width: 46px; height: 46px;
+  color: var(--accent);
+  opacity: .8;
+}
+.lightbox__empty-icon svg { width: 100%; height: 100%; }
+.lightbox__empty-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.lightbox__empty-desc {
+  font-size: 13px;
+  color: var(--text-faint);
+  max-width: 30em;
+  line-height: 1.7;
+}
+
+.lightbox__info {
+  padding: 20px 26px 24px;
+  border-top: 1px solid var(--line);
+}
+.lightbox__title {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  margin-bottom: 6px;
+}
+.lightbox__meta {
+  font-size: 13px;
+  color: var(--accent);
+  letter-spacing: .02em;
+}
+
+@media (max-width: 760px) {
+  .lightbox { padding: 16px; }
+  .lightbox__panel { border-radius: 16px; }
+  .lightbox__close { top: 10px; right: 10px; width: 34px; height: 34px; }
+  .lightbox__info { padding: 16px 18px 20px; }
+  .lightbox__title { font-size: 16.5px; }
+}
+
+/* 弹层打开时锁定页面滚动 */
+body.is-locked { overflow: hidden; }
+
+/* ============================================================
+   自定义光标 · 纸飞机
+   ============================================================ */
+
+/* 仅在支持精确指针的设备上隐藏系统光标 */
+@media (hover: hover) and (pointer: fine) {
+  body.has-custom-cursor,
+  body.has-custom-cursor * {
+    cursor: none !important;
+  }
+}
+
+.cursor {
+  position: fixed;
+  top: 0; left: 0;
+  width: 0; height: 0;
+  z-index: 10000;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+  /* 由 JS 写入 --cx / --cy */
+  transform: translate3d(var(--cx, -100px), var(--cy, -100px), 0);
+  will-change: transform;
+}
+.cursor.is-active { opacity: 1; }
+
+/* --- 纸飞机本体 --- */
+.cursor__plane {
+  position: absolute;
+  width: 58px;
+  height: 58px;
+  /* 让飞机重心（50% / 42.7% 处）对准落点 */
+  left: -29px;
+  top: -24.8px;
+  overflow: visible;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, .62));
+  transform-origin: 50% 42.7%;
+  /* 旋转由 JS 写 --plane-rot，缩放由悬停态写 --plane-scale，互不干扰 */
+  transform: rotate(calc(var(--plane-rot, 0deg) + var(--plane-tilt, 0deg)))
+             scale(var(--plane-scale, 1));
+  transition: filter .3s var(--ease), transform .22s var(--ease);
+}
+
+/* 卡通描边：白色描边 + 深色外轮廓，让纸飞机在任何背景上都醒目 */
+/* 尺寸放大后描边同步加粗，否则线条会显得太细、丢掉卡通感 */
+.cursor__plane .plane__wing,
+.cursor__plane .plane__body,
+.cursor__plane .plane__fold {
+  stroke: rgba(28, 32, 42, .72);
+  stroke-width: 1.95;
+  stroke-linejoin: round;
+  transition: fill .3s var(--ease), stroke .3s var(--ease);
+}
+
+/* --- 悬停可点元素：放大、上仰、整体提亮 --- */
+/* 机身从 44px 增到 58px 后，悬停倍率从 1.3 收到 1.18，避免"突然变得很大" */
+.cursor.is-hover .cursor__plane {
+  --plane-scale: 1.18;
+  --plane-tilt: -10deg;
+  filter: drop-shadow(0 0 16px rgba(255, 255, 255, .42))
+          drop-shadow(0 4px 12px rgba(0, 0, 0, .55));
+}
+.cursor.is-hover .plane__wing { fill: #ffffff; stroke: rgba(255, 255, 255, .95); }
+.cursor.is-hover .plane__body { fill: #e2eaf6; stroke: rgba(255, 255, 255, .95); }
+.cursor.is-hover .plane__fold { fill: #b6c4d8; stroke: rgba(255, 255, 255, .85); }
+
+/* 悬停时的外圈光晕（改为白色，与尾流呼应） */
+.cursor__plane::after {
+  content: '';
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, .85);
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .35s var(--ease), transform .45s var(--ease);
+}
+.cursor.is-hover .cursor__plane::after {
+  opacity: .38;
+  transform: scale(1);
+}
+
+/* --- 点击反馈 --- */
+.cursor.is-down .cursor__plane { --plane-scale: .88; }
+
+.cursor__dot {
+  position: absolute;
+  left: -2px; top: -2px;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .95);
+  box-shadow: 0 0 0 1px rgba(20, 22, 28, .5), 0 0 8px rgba(0, 0, 0, .7);
+  transition: background-color .25s, transform .25s, box-shadow .25s;
+}
+.cursor.is-hover .cursor__dot {
+  background: var(--accent);
+  transform: scale(1.5);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .5), 0 0 10px var(--accent-glow);
+}
+
+/* 点击冲击环 */
+.cursor__ring {
+  position: absolute;
+  left: -14px; top: -14px;
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.cursor__ring.is-burst {
+  animation: cursorBurst .55s var(--ease) forwards;
+}
+@keyframes cursorBurst {
+  0%   { opacity: .9; transform: scale(.4); }
+  100% { opacity: 0;  transform: scale(2.4); }
+}
+
+/* --- 拖尾光带（canvas 绘制，全屏独立层） --- */
+.cursor__trail-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  /* 在纸飞机下层 */
+  z-index: 9999;
+  transition: opacity .35s var(--ease);
+  opacity: 0;
+}
+.cursor__trail-canvas.is-active { opacity: 1; }
+
+/* 点击冲击环 */
+.cursor__ring {
+  position: absolute;
+  left: -16px; top: -16px;
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.cursor__ring.is-burst {
+  animation: cursorBurst .55s var(--ease) forwards;
+}
+@keyframes cursorBurst {
+  0%   { opacity: .9; transform: scale(.4); }
+  100% { opacity: 0;  transform: scale(2.6); }
+}
+
+/* 文字选中时恢复正常光标 */
+body.is-selecting,
+body.is-selecting * {
+  cursor: auto !important;
+}
+body.is-selecting .cursor,
+body.is-selecting .cursor__trail-canvas { opacity: 0; }
+
+/* 触摸设备 / 无精确指针：彻底不启用 */
+@media (hover: none), (pointer: coarse) {
+  .cursor { display: none !important; }
+}
+
+/* ============================================================
+   环境层 · 纸飞机飞行的七个环境
+   —— 整块只在 html.has-env 时生效（由脚本添加）
+   —— 脚本未加载 / JS 关闭时，站点自动退回原本的深色版，零破坏
+   —— 所有画面由渐变与遮罩实时绘制，不引用任何图片
+   ============================================================ */
+
+/* ---------- 基础：底色与画布 ---------- */
+html.has-env { background: #05070c; }
+html.has-env body { background: transparent; }
+
+.env {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+
+  /* 场景画布上下各外扩这么多，给视差留余量。
+     贴地层（树线/天际线）用 bottom: calc(var(--env-over) + Xvh) 补偿这段外扩，
+     否则它们会被顶到视口下沿之外。 */
+  --env-over: 14vh;
+
+  /* 针叶林树线遮罩（森林远/中/近三层共用同一形状，靠颜色与尺寸拉开层次） */
+  --mask-trees: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%203600%20700'%3E%3Cpath%20d%3D'M-75%20150%20L-60%20100%20L-45%20150%20Z%20M-51%20146%20L-43%20121%20L-35%20146%20Z%20M-41%20151%20L-30%20114%20L-19%20151%20Z%20M-23%20154%20L-4%2090%20L14%20154%20Z%20M-3%20147%20L12%20105%20L26%20147%20Z%20M13%20146%20L32%2078%20L51%20146%20Z%20M24%20150%20L47%2080%20L69%20150%20Z%20M38%20150%20L63%2075%20L87%20150%20Z%20M66%20149%20L87%2077%20L108%20149%20Z%20M101%20153%20L110%20125%20L119%20153%20Z%20M104%20151%20L130%2071%20L156%20151%20Z%20M122%20146%20L148%2068%20L174%20146%20Z%20M150%20149%20L170%2081%20L190%20149%20Z%20M181%20146%20L191%20110%20L202%20146%20Z%20M200%20146%20L214%20105%20L228%20146%20Z%20M211%20148%20L232%2085%20L254%20148%20Z%20M235%20147%20L250%2094%20L266%20147%20Z%20M252%20145%20L265%2099%20L279%20145%20Z%20M266%20150%20L283%2097%20L301%20150%20Z%20M264%20153%20L304%2039%20L344%20153%20Z%20M306%20146%20L321%2091%20L337%20146%20Z%20M329%20147%20L336%20119%20L344%20147%20Z%20M317%20148%20L350%2034%20L383%20148%20Z%20M348%20150%20L367%2097%20L386%20150%20Z%20M374%20153%20L385%20115%20L397%20153%20Z%20M389%20150%20L400%20115%20L410%20150%20Z%20M391%20148%20L412%2086%20L433%20148%20Z%20M415%20148%20L429%20106%20L444%20148%20Z%20M418%20153%20L444%2077%20L471%20153%20Z%20M454%20145%20L467%2099%20L480%20145%20Z%20M468%20154%20L483%20107%20L498%20154%20Z%20M484%20147%20L508%2063%20L533%20147%20Z%20M502%20152%20L523%2085%20L544%20152%20Z%20M533%20153%20L547%20114%20L560%20153%20Z%20M550%20155%20L565%20111%20L580%20155%20Z%20M567%20146%20L583%2091%20L599%20146%20Z%20M578%20155%20L597%20101%20L615%20155%20Z%20M608%20155%20L618%20120%20L628%20155%20Z%20M618%20153%20L639%2092%20L661%20153%20Z%20M639%20148%20L654%20100%20L670%20148%20Z%20M659%20151%20L672%20110%20L685%20151%20Z%20M679%20150%20L697%2094%20L715%20150%20Z%20M696%20147%20L709%20109%20L722%20147%20Z%20M704%20151%20L728%2079%20L751%20151%20Z%20M739%20153%20L751%20113%20L762%20153%20Z%20M750%20151%20L770%2088%20L790%20151%20Z%20M769%20150%20L789%2089%20L808%20150%20Z%20M793%20151%20L814%2080%20L835%20151%20Z%20M823%20146%20L839%2094%20L855%20146%20Z%20M841%20147%20L854%20109%20L868%20147%20Z%20M852%20147%20L876%2079%20L901%20147%20Z%20M883%20147%20L902%2092%20L921%20147%20Z%20M901%20152%20L920%2091%20L938%20152%20Z%20M919%20151%20L932%20110%20L945%20151%20Z%20M938%20146%20L951%20109%20L965%20146%20Z%20M957%20149%20L967%20113%20L977%20149%20Z%20M974%20151%20L992%20100%20L1010%20151%20Z%20M982%20154%20L1014%2045%20L1045%20154%20Z%20M1008%20150%20L1034%2075%20L1061%20150%20Z%20M1033%20150%20L1051%2088%20L1069%20150%20Z%20M1059%20148%20L1067%20122%20L1074%20148%20Z%20M1061%20148%20L1083%2075%20L1104%20148%20Z%20M1062%20150%20L1095%2039%20L1128%20150%20Z%20M1108%20153%20L1120%20114%20L1133%20153%20Z%20M1119%20153%20L1138%2093%20L1156%20153%20Z%20M1140%20146%20L1160%2079%20L1179%20146%20Z%20M1152%20153%20L1173%2081%20L1193%20153%20Z%20M1176%20150%20L1197%2081%20L1218%20150%20Z%20M1190%20150%20L1211%2093%20L1231%20150%20Z%20M1203%20149%20L1226%2065%20L1250%20149%20Z%20M1228%20148%20L1245%2087%20L1262%20148%20Z%20M1229%20151%20L1258%2054%20L1287%20151%20Z%20M1252%20149%20L1278%2076%20L1303%20149%20Z%20M1266%20145%20L1294%2060%20L1322%20145%20Z%20M1290%20146%20L1318%2066%20L1346%20146%20Z%20M1316%20151%20L1337%2091%20L1358%20151%20Z%20M1342%20146%20L1362%2077%20L1381%20146%20Z%20M1366%20151%20L1379%20112%20L1392%20151%20Z%20M1365%20150%20L1400%2038%20L1436%20150%20Z%20M1411%20148%20L1422%20110%20L1432%20148%20Z%20M1430%20149%20L1444%20104%20L1458%20149%20Z%20M1439%20146%20L1463%2076%20L1486%20146%20Z%20M1461%20145%20L1477%2098%20L1492%20145%20Z%20M1473%20148%20L1489%20100%20L1505%20148%20Z%20M1495%20147%20L1509%20109%20L1522%20147%20Z%20M1497%20149%20L1534%2044%20L1572%20149%20Z%20M1535%20146%20L1550%20102%20L1565%20146%20Z%20M1543%20154%20L1569%2070%20L1596%20154%20Z%20M1578%20145%20L1591%2099%20L1604%20145%20Z%20M1599%20148%20L1610%20110%20L1622%20148%20Z%20M1624%20154%20L1634%20120%20L1644%20154%20Z%20M1631%20155%20L1656%2074%20L1681%20155%20Z%20M1661%20146%20L1676%2093%20L1691%20146%20Z%20M1685%20150%20L1700%20101%20L1715%20150%20Z%20M1696%20151%20L1715%2098%20L1733%20151%20Z%20M1716%20152%20L1739%2069%20L1763%20152%20Z%20M1737%20154%20L1758%2081%20L1778%20154%20Z%20M1752%20155%20L1771%2096%20L1791%20155%20Z%20M1766%20147%20L1787%2079%20L1808%20147%20Z%20M1788%20154%20L1801%20109%20L1815%20154%20Z%20M1811%20148%20L1827%2091%20L1844%20148%20Z%20M1824%20152%20L1841%20106%20L1857%20152%20Z%20M1841%20146%20L1858%2090%20L1875%20146%20Z%20M1846%20154%20L1874%2069%20L1902%20154%20Z%20M1874%20155%20L1889%20106%20L1904%20155%20Z%20M1879%20150%20L1913%2053%20L1947%20150%20Z%20M1922%20154%20L1933%20120%20L1945%20154%20Z%20M1949%20152%20L1959%20121%20L1969%20152%20Z%20M1961%20151%20L1984%2079%20L2007%20151%20Z%20M1972%20148%20L1997%2073%20L2021%20148%20Z%20M1997%20146%20L2010%2099%20L2024%20146%20Z%20M2009%20145%20L2030%2081%20L2051%20145%20Z%20M2026%20150%20L2046%2092%20L2066%20150%20Z%20M2047%20145%20L2061%2098%20L2076%20145%20Z%20M2057%20154%20L2080%2085%20L2103%20154%20Z%20M2083%20147%20L2095%20111%20L2107%20147%20Z%20M2093%20148%20L2119%2076%20L2145%20148%20Z%20M2128%20155%20L2142%20109%20L2156%20155%20Z%20M2146%20154%20L2161%20111%20L2176%20154%20Z%20M2159%20146%20L2175%2091%20L2191%20146%20Z%20M2169%20155%20L2188%20101%20L2206%20155%20Z%20M2196%20145%20L2213%2094%20L2230%20145%20Z%20M2219%20145%20L2234%2091%20L2250%20145%20Z%20M2238%20147%20L2250%20113%20L2263%20147%20Z%20M2245%20150%20L2267%2073%20L2289%20150%20Z%20M2256%20145%20L2284%2063%20L2313%20145%20Z%20M2288%20146%20L2302%2095%20L2316%20146%20Z%20M2312%20148%20L2327%20100%20L2342%20148%20Z%20M2332%20148%20L2352%2082%20L2373%20148%20Z%20M2338%20145%20L2364%2072%20L2391%20145%20Z%20M2362%20148%20L2380%2089%20L2398%20148%20Z%20M2377%20152%20L2398%2093%20L2418%20152%20Z%20M2399%20149%20L2421%2074%20L2444%20149%20Z%20M2433%20146%20L2444%20108%20L2456%20146%20Z%20M2435%20155%20L2457%2092%20L2479%20155%20Z%20M2460%20149%20L2472%20111%20L2485%20149%20Z%20M2469%20153%20L2488%2098%20L2507%20153%20Z%20M2496%20149%20L2509%20108%20L2522%20149%20Z%20M2518%20154%20L2531%20109%20L2544%20154%20Z%20M2535%20147%20L2551%2096%20L2568%20147%20Z%20M2560%20153%20L2575%20108%20L2589%20153%20Z%20M2579%20155%20L2599%2087%20L2618%20155%20Z%20M2593%20148%20L2619%2065%20L2645%20148%20Z%20M2614%20147%20L2642%2064%20L2669%20147%20Z%20M2645%20152%20L2659%20110%20L2672%20152%20Z%20M2663%20148%20L2674%20114%20L2684%20148%20Z%20M2674%20149%20L2688%2099%20L2703%20149%20Z%20M2686%20149%20L2708%2082%20L2731%20149%20Z%20M2708%20149%20L2724%2099%20L2740%20149%20Z%20M2719%20152%20L2742%2073%20L2765%20152%20Z%20M2745%20149%20L2757%20115%20L2769%20149%20Z%20M2769%20151%20L2781%20113%20L2794%20151%20Z%20M2794%20146%20L2806%20108%20L2818%20146%20Z%20M2809%20153%20L2822%20113%20L2835%20153%20Z%20M2832%20150%20L2847%20106%20L2863%20150%20Z%20M2833%20153%20L2860%2071%20L2887%20153%20Z%20M2848%20153%20L2874%2078%20L2900%20153%20Z%20M2875%20146%20L2889%20101%20L2903%20146%20Z%20M2889%20153%20L2904%20105%20L2920%20153%20Z%20M2892%20151%20L2917%2074%20L2942%20151%20Z%20M2915%20149%20L2933%2094%20L2952%20149%20Z%20M2941%20153%20L2951%20117%20L2962%20153%20Z%20M2958%20146%20L2974%2088%20L2991%20146%20Z%20M2981%20151%20L2992%20113%20L3003%20151%20Z%20M2985%20150%20L3005%2078%20L3026%20150%20Z%20M2993%20152%20L3023%2069%20L3053%20152%20Z%20M3030%20154%20L3046%20110%20L3062%20154%20Z%20M3045%20153%20L3060%20103%20L3076%20153%20Z%20M3051%20150%20L3075%2069%20L3098%20150%20Z%20M3086%20145%20L3100%20101%20L3113%20145%20Z%20M3099%20147%20L3114%20104%20L3129%20147%20Z%20M3125%20154%20L3137%20114%20L3149%20154%20Z%20M3142%20151%20L3157%20109%20L3172%20151%20Z%20M3150%20149%20L3174%2073%20L3199%20149%20Z%20M3181%20153%20L3197%2096%20L3213%20153%20Z%20M3190%20148%20L3213%2081%20L3235%20148%20Z%20M3213%20150%20L3225%20114%20L3236%20150%20Z%20M3238%20145%20L3249%20104%20L3261%20145%20Z%20M3253%20151%20L3266%20111%20L3279%20151%20Z%20M3265%20147%20L3281%20104%20L3297%20147%20Z%20M3282%20149%20L3295%20110%20L3308%20149%20Z%20M3300%20151%20L3311%20117%20L3321%20151%20Z%20M3300%20145%20L3329%2063%20L3358%20145%20Z%20M3336%20145%20L3348%20109%20L3361%20145%20Z%20M3341%20150%20L3368%2067%20L3395%20150%20Z%20M3366%20145%20L3389%2069%20L3412%20145%20Z%20M3396%20152%20L3414%20103%20L3431%20152%20Z%20M3411%20147%20L3432%2075%20L3453%20147%20Z%20M3427%20152%20L3445%20101%20L3463%20152%20Z%20M3440%20148%20L3460%2085%20L3481%20148%20Z%20M3458%20148%20L3481%2063%20L3505%20148%20Z%20M3474%20154%20L3497%2081%20L3519%20154%20Z%20M3498%20152%20L3513%20105%20L3529%20152%20Z%20M3519%20149%20L3539%2091%20L3559%20149%20Z%20M3540%20146%20L3561%2082%20L3582%20146%20Z%20M3556%20146%20L3586%2048%20L3616%20146%20Z%20M3586%20152%20L3598%20116%20L3610%20152%20Z%20M3589%20154%20L3611%2089%20L3634%20154%20Z%20M3601%20147%20L3624%2068%20L3647%20147%20Z%20M3626%20153%20L3638%20117%20L3650%20153%20Z%20M3648%20147%20L3659%20115%20L3670%20147%20Z%20M-51%20151%20L-40%20129%20L-29%20151%20Z%20M-49%20152%20L-32%20125%20L-15%20152%20Z%20M-38%20154%20L-19%20131%20L-1%20154%20Z%20M-27%20155%20L-13%20134%20L1%20155%20Z%20M-23%20151%20L-5%20124%20L14%20151%20Z%20M-5%20150%20L7%20135%20L20%20150%20Z%20M-0%20157%20L13%20139%20L27%20157%20Z%20M4%20155%20L19%20133%20L35%20155%20Z%20M13%20156%20L27%20133%20L41%20156%20Z%20M16%20151%20L35%20120%20L53%20151%20Z%20M33%20154%20L45%20131%20L58%20154%20Z%20M31%20155%20L52%20127%20L73%20155%20Z%20M49%20152%20L62%20132%20L75%20152%20Z%20M62%20149%20L75%20134%20L87%20149%20Z%20M67%20153%20L82%20134%20L97%20153%20Z%20M73%20153%20L91%20123%20L108%20153%20Z%20M79%20154%20L100%20127%20L122%20154%20Z%20M98%20156%20L109%20136%20L120%20156%20Z%20M104%20153%20L120%20125%20L135%20153%20Z%20M118%20153%20L131%20128%20L144%20153%20Z%20M133%20151%20L143%20133%20L154%20151%20Z%20M138%20150%20L154%20121%20L170%20150%20Z%20M148%20150%20L162%20130%20L175%20150%20Z%20M155%20155%20L170%20137%20L185%20155%20Z%20M160%20152%20L177%20121%20L194%20152%20Z%20M168%20152%20L190%20124%20L211%20152%20Z%20M183%20151%20L197%20125%20L211%20151%20Z%20M196%20155%20L206%20141%20L215%20155%20Z%20M200%20153%20L217%20130%20L233%20153%20Z%20M208%20155%20L224%20130%20L240%20155%20Z%20M221%20155%20L236%20133%20L251%20155%20Z%20M231%20156%20L245%20138%20L259%20156%20Z%20M235%20154%20L256%20128%20L278%20154%20Z%20M253%20154%20L267%20132%20L280%20154%20Z%20M257%20155%20L274%20133%20L290%20155%20Z%20M272%20153%20L284%20134%20L296%20153%20Z%20M279%20156%20L294%20135%20L310%20156%20Z%20M282%20152%20L302%20126%20L321%20152%20Z%20M295%20153%20L311%20122%20L327%20153%20Z%20M295%20153%20L318%20125%20L341%20153%20Z%20M308%20155%20L325%20130%20L342%20155%20Z%20M314%20153%20L334%20128%20L355%20153%20Z%20M325%20154%20L343%20123%20L361%20154%20Z%20M337%20157%20L352%20129%20L367%20157%20Z%20M352%20152%20L361%20137%20L369%20152%20Z%20M353%20155%20L367%20133%20L381%20155%20Z%20M364%20155%20L375%20136%20L386%20155%20Z%20M374%20155%20L388%20132%20L401%20155%20Z%20M387%20155%20L396%20137%20L406%20155%20Z%20M391%20153%20L408%20128%20L425%20153%20Z%20M396%20154%20L416%20123%20L435%20154%20Z%20M408%20151%20L427%20123%20L446%20151%20Z%20M424%20152%20L437%20136%20L450%20152%20Z%20M437%20151%20L449%20132%20L461%20151%20Z%20M449%20155%20L458%20137%20L467%20155%20Z%20M455%20153%20L466%20134%20L477%20153%20Z%20M457%20152%20L475%20126%20L494%20152%20Z%20M472%20156%20L488%20126%20L503%20156%20Z%20M485%20156%20L500%20128%20L515%20156%20Z%20M503%20157%20L510%20142%20L518%20157%20Z%20M511%20150%20L521%20132%20L531%20150%20Z%20M511%20150%20L529%20122%20L546%20150%20Z%20M525%20156%20L541%20128%20L557%20156%20Z%20M531%20156%20L551%20128%20L572%20156%20Z%20M546%20155%20L563%20125%20L579%20155%20Z%20M555%20156%20L572%20129%20L590%20156%20Z%20M571%20150%20L582%20131%20L593%20150%20Z%20M582%20150%20L592%20135%20L602%20150%20Z%20M585%20156%20L601%20133%20L617%20156%20Z%20M588%20154%20L607%20124%20L627%20154%20Z%20M600%20152%20L618%20123%20L636%20152%20Z%20M620%20154%20L631%20139%20L642%20154%20Z%20M618%20156%20L637%20131%20L655%20156%20Z%20M624%20153%20L645%20121%20L667%20153%20Z%20M646%20154%20L657%20139%20L668%20154%20Z%20M647%20153%20L666%20123%20L684%20153%20Z%20M660%20152%20L676%20125%20L692%20152%20Z%20M666%20151%20L684%20127%20L703%20151%20Z%20M682%20151%20L696%20130%20L711%20151%20Z%20M683%20155%20L706%20124%20L729%20155%20Z%20M702%20154%20L714%20134%20L726%20154%20Z%20M710%20155%20L725%20127%20L739%20155%20Z%20M724%20151%20L737%20128%20L749%20151%20Z%20M728%20154%20L743%20136%20L757%20154%20Z%20M730%20154%20L753%20126%20L776%20154%20Z%20M745%20154%20L764%20128%20L783%20154%20Z%20M761%20153%20L775%20135%20L788%20153%20Z%20M777%20149%20L786%20133%20L795%20149%20Z%20M775%20152%20L797%20121%20L819%20152%20Z%20M789%20151%20L809%20123%20L829%20151%20Z%20M804%20152%20L817%20131%20L830%20152%20Z%20M812%20154%20L828%20123%20L844%20154%20Z%20M821%20154%20L834%20137%20L847%20154%20Z%20M835%20152%20L846%20130%20L857%20152%20Z%20M830%20153%20L856%20122%20L883%20153%20Z%20M854%20151%20L865%20135%20L877%20151%20Z%20M865%20154%20L872%20140%20L880%20154%20Z%20M863%20156%20L879%20125%20L896%20156%20Z%20M875%20151%20L886%20137%20L897%20151%20Z%20M888%20155%20L897%20138%20L906%20155%20Z%20M886%20150%20L908%20120%20L931%20150%20Z%20M901%20156%20L919%20130%20L936%20156%20Z%20M903%20149%20L926%20118%20L950%20149%20Z%20M912%20150%20L933%20124%20L953%20150%20Z%20M926%20156%20L941%20129%20L956%20156%20Z%20M941%20154%20L950%20139%20L960%20154%20Z%20M945%20155%20L959%20129%20L974%20155%20Z%20M949%20152%20L968%20127%20L986%20152%20Z%20M953%20155%20L976%20127%20L1000%20155%20Z%20M976%20157%20L986%20138%20L996%20157%20Z%20M980%20154%20L997%20125%20L1015%20154%20Z%20M990%20151%20L1010%20123%20L1031%20151%20Z%20M1000%20154%20L1019%20124%20L1038%20154%20Z%20M1006%20151%20L1029%20121%20L1053%20151%20Z%20M1023%20154%20L1035%20135%20L1048%20154%20Z%20M1032%20156%20L1047%20126%20L1063%20156%20Z%20M1038%20151%20L1059%20122%20L1080%20151%20Z%20M1050%20156%20L1071%20128%20L1092%20156%20Z%20M1068%20155%20L1079%20140%20L1090%20155%20Z%20M1064%20151%20L1087%20123%20L1109%20151%20Z%20M1080%20151%20L1097%20124%20L1114%20151%20Z%20M1083%20153%20L1105%20125%20L1126%20153%20Z%20M1089%20151%20L1111%20122%20L1133%20151%20Z%20M1097%20153%20L1121%20123%20L1146%20153%20Z%20M1117%20151%20L1131%20126%20L1145%20151%20Z%20M1121%20154%20L1138%20127%20L1155%20154%20Z%20M1134%20149%20L1147%20126%20L1160%20149%20Z%20M1149%20154%20L1160%20133%20L1171%20154%20Z%20M1159%20152%20L1171%20135%20L1183%20152%20Z%20M1174%20157%20L1181%20143%20L1188%20157%20Z%20M1177%20151%20L1193%20128%20L1209%20151%20Z%20M1186%20155%20L1204%20133%20L1222%20155%20Z%20M1198%20149%20L1216%20118%20L1235%20149%20Z%20M1214%20149%20L1224%20132%20L1233%20149%20Z%20M1214%20157%20L1233%20127%20L1253%20157%20Z%20M1235%20152%20L1246%20137%20L1257%20152%20Z%20M1234%20154%20L1253%20122%20L1271%20154%20Z%20M1240%20152%20L1263%20121%20L1286%20152%20Z%20M1258%20157%20L1272%20140%20L1286%20157%20Z%20M1271%20152%20L1280%20137%20L1288%20152%20Z%20M1268%20149%20L1292%20119%20L1316%20149%20Z%20M1284%20157%20L1304%20130%20L1323%20157%20Z%20M1297%20157%20L1310%20140%20L1323%20157%20Z%20M1307%20155%20L1321%20136%20L1334%20155%20Z%20M1316%20150%20L1328%20130%20L1339%20150%20Z%20M1327%20150%20L1337%20133%20L1347%20150%20Z%20M1337%20151%20L1348%20136%20L1358%20151%20Z%20M1336%20156%20L1354%20126%20L1372%20156%20Z%20M1349%20153%20L1366%20123%20L1382%20153%20Z%20M1348%20154%20L1373%20123%20L1397%20154%20Z%20M1366%20153%20L1382%20133%20L1398%20153%20Z%20M1383%20149%20L1392%20133%20L1402%20149%20Z%20M1390%20156%20L1403%20132%20L1416%20156%20Z%20M1399%20151%20L1411%20130%20L1423%20151%20Z%20M1412%20153%20L1423%20133%20L1434%20153%20Z%20M1415%20157%20L1431%20127%20L1447%20157%20Z%20M1415%20151%20L1438%20121%20L1460%20151%20Z%20M1436%20151%20L1447%20131%20L1458%20151%20Z%20M1428%20156%20L1455%20125%20L1482%20156%20Z%20M1446%20149%20L1462%20130%20L1478%20149%20Z%20M1457%20149%20L1473%20130%20L1489%20149%20Z%20M1474%20149%20L1485%20129%20L1496%20149%20Z%20M1483%20152%20L1497%20129%20L1510%20152%20Z%20M1497%20150%20L1509%20132%20L1522%20150%20Z%20M1495%20151%20L1516%20123%20L1537%20151%20Z%20M1512%20153%20L1523%20137%20L1534%20153%20Z%20M1518%20155%20L1531%20137%20L1543%20155%20Z%20M1528%20150%20L1542%20125%20L1556%20150%20Z%20M1538%20149%20L1554%20128%20L1570%20149%20Z%20M1549%20156%20L1565%20136%20L1581%20156%20Z%20M1563%20153%20L1575%20139%20L1586%20153%20Z%20M1576%20156%20L1587%20137%20L1597%20156%20Z%20M1585%20154%20L1595%20137%20L1606%20154%20Z%20M1586%20153%20L1601%20130%20L1617%20153%20Z%20M1587%20156%20L1608%20129%20L1629%20156%20Z%20M1600%20155%20L1617%20128%20L1634%20155%20Z%20M1598%20153%20L1623%20123%20L1648%20153%20Z%20M1616%20149%20L1633%20126%20L1649%20149%20Z%20M1635%20150%20L1645%20132%20L1655%20150%20Z%20M1638%20150%20L1653%20121%20L1668%20150%20Z%20M1655%20154%20L1664%20136%20L1673%20154%20Z%20M1657%20150%20L1674%20126%20L1691%20150%20Z%20M1672%20150%20L1686%20123%20L1700%20150%20Z%20M1682%20150%20L1696%20127%20L1709%20150%20Z%20M1693%20156%20L1704%20139%20L1716%20156%20Z%20M1693%20150%20L1711%20126%20L1730%20150%20Z%20M1704%20152%20L1723%20121%20L1743%20152%20Z%20M1720%20157%20L1735%20133%20L1750%20157%20Z%20M1735%20152%20L1747%20132%20L1758%20152%20Z%20M1731%20156%20L1756%20125%20L1780%20156%20Z%20M1752%20153%20L1767%20124%20L1782%20153%20Z%20M1762%20152%20L1780%20122%20L1798%20152%20Z%20M1776%20150%20L1790%20129%20L1805%20150%20Z%20M1788%20150%20L1799%20127%20L1811%20150%20Z%20M1789%20154%20L1812%20126%20L1835%20154%20Z%20M1800%20149%20L1824%20119%20L1848%20149%20Z%20M1821%20151%20L1834%20132%20L1848%20151%20Z%20M1822%20151%20L1844%20120%20L1866%20151%20Z%20M1836%20151%20L1854%20129%20L1872%20151%20Z%20M1848%20154%20L1862%20128%20L1876%20154%20Z%20M1861%20153%20L1875%20129%20L1888%20153%20Z%20M1875%20150%20L1884%20133%20L1893%20150%20Z%20M1880%20151%20L1892%20130%20L1905%20151%20Z%20M1880%20154%20L1899%20130%20L1918%20154%20Z%20M1894%20155%20L1909%20129%20L1924%20155%20Z%20M1901%20153%20L1918%20129%20L1935%20153%20Z%20M1916%20153%20L1926%20135%20L1937%20153%20Z%20M1923%20152%20L1935%20127%20L1948%20152%20Z%20M1934%20153%20L1947%20135%20L1960%20153%20Z%20M1936%20155%20L1955%20123%20L1974%20155%20Z%20M1950%20153%20L1962%20137%20L1975%20153%20Z%20M1955%20155%20L1969%20134%20L1982%20155%20Z%20M1960%20155%20L1975%20137%20L1991%20155%20Z%20M1970%20154%20L1983%20134%20L1995%20154%20Z%20M1970%20153%20L1993%20124%20L2016%20153%20Z%20M1983%20153%20L2004%20125%20L2025%20153%20Z%20M1994%20150%20L2016%20123%20L2037%20150%20Z%20M2017%20154%20L2028%20140%20L2038%20154%20Z%20M2015%20152%20L2037%20121%20L2059%20152%20Z%20M2027%20152%20L2049%20122%20L2070%20152%20Z%20M2041%20151%20L2058%20129%20L2075%20151%20Z%20M2051%20152%20L2066%20128%20L2082%20152%20Z%20M2058%20153%20L2078%20123%20L2098%20153%20Z%20M2075%20154%20L2085%20134%20L2096%20154%20Z%20M2083%20152%20L2095%20136%20L2108%20152%20Z%20M2083%20151%20L2107%20122%20L2132%20151%20Z%20M2101%20149%20L2116%20119%20L2132%20149%20Z%20M2107%20155%20L2126%20132%20L2145%20155%20Z%20M2114%20153%20L2136%20121%20L2158%20153%20Z%20M2134%20154%20L2147%20133%20L2160%20154%20Z%20M2132%20153%20L2155%20122%20L2178%20153%20Z%20M2149%20153%20L2162%20133%20L2175%20153%20Z%20M2147%20153%20L2172%20123%20L2197%20153%20Z%20M2160%20152%20L2181%20127%20L2202%20152%20Z%20M2175%20152%20L2191%20123%20L2207%20152%20Z%20M2184%20150%20L2204%20121%20L2223%20150%20Z%20M2195%20157%20L2216%20131%20L2237%20157%20Z%20M2216%20151%20L2228%20130%20L2240%20151%20Z%20M2225%20150%20L2238%20127%20L2251%20150%20Z%20M2233%20157%20L2248%20132%20L2264%20157%20Z%20M2249%20155%20L2259%20141%20L2268%20155%20Z%20M2253%20151%20L2267%20125%20L2280%20151%20Z%20M2261%20151%20L2279%20126%20L2297%20151%20Z%20M2274%20154%20L2288%20130%20L2302%20154%20Z%20M2275%20152%20L2298%20120%20L2320%20152%20Z%20M2292%20150%20L2305%20133%20L2317%20150%20Z%20M2300%20156%20L2311%20139%20L2323%20156%20Z%20M2307%20149%20L2322%20121%20L2336%20149%20Z%20M2318%20152%20L2333%20132%20L2348%20152%20Z%20M2330%20156%20L2340%20137%20L2350%20156%20Z%20M2337%20152%20L2350%20132%20L2364%20152%20Z%20M2335%20157%20L2357%20127%20L2378%20157%20Z%20M2351%20149%20L2366%20124%20L2380%20149%20Z%20M2360%20156%20L2378%20127%20L2396%20156%20Z%20M2376%20157%20L2390%20137%20L2404%20157%20Z%20M2381%20152%20L2399%20121%20L2418%20152%20Z%20M2400%20156%20L2410%20138%20L2421%20156%20Z%20M2403%20150%20L2420%20122%20L2436%20150%20Z%20M2414%20151%20L2428%20134%20L2443%20151%20Z%20M2427%20152%20L2438%20136%20L2449%20152%20Z%20M2439%20156%20L2447%20140%20L2455%20156%20Z%20M2445%20151%20L2456%20133%20L2466%20151%20Z%20M2452%20152%20L2463%20137%20L2474%20152%20Z%20M2456%20151%20L2470%20124%20L2485%20151%20Z%20M2471%20156%20L2482%20139%20L2493%20156%20Z%20M2483%20155%20L2494%20138%20L2504%20155%20Z%20M2485%20157%20L2502%20125%20L2520%20157%20Z%20M2500%20150%20L2512%20132%20L2524%20150%20Z%20M2508%20154%20L2523%20135%20L2538%20154%20Z%20M2518%20151%20L2531%20132%20L2545%20151%20Z%20M2533%20153%20L2544%20137%20L2555%20153%20Z%20M2534%20154%20L2551%20126%20L2569%20154%20Z%20M2549%20150%20L2561%20130%20L2574%20150%20Z%20M2551%20154%20L2569%20125%20L2587%20154%20Z%20M2560%20153%20L2575%20129%20L2591%20153%20Z%20M2574%20151%20L2584%20136%20L2593%20151%20Z%20M2574%20152%20L2590%20125%20L2607%20152%20Z%20M2580%20156%20L2603%20128%20L2625%20156%20Z%20M2600%20154%20L2610%20135%20L2619%20154%20Z%20M2607%20154%20L2620%20134%20L2633%20154%20Z%20M2617%20152%20L2631%20133%20L2646%20152%20Z%20M2632%20156%20L2642%20139%20L2651%20156%20Z%20M2639%20149%20L2653%20122%20L2667%20149%20Z%20M2649%20152%20L2660%20134%20L2671%20152%20Z%20M2652%20150%20L2666%20131%20L2680%20150%20Z%20M2660%20151%20L2678%20127%20L2696%20151%20Z%20M2671%20149%20L2687%20123%20L2703%20149%20Z%20M2682%20149%20L2699%20121%20L2716%20149%20Z%20M2698%20151%20L2711%20126%20L2724%20151%20Z%20M2702%20156%20L2718%20128%20L2734%20156%20Z%20M2717%20152%20L2729%20137%20L2741%20152%20Z%20M2723%20150%20L2740%20121%20L2757%20150%20Z%20M2735%20155%20L2753%20133%20L2771%20155%20Z%20M2743%20153%20L2764%20124%20L2785%20153%20Z%20M2753%20153%20L2770%20127%20L2788%20153%20Z%20M2770%20149%20L2783%20133%20L2795%20149%20Z%20M2777%20153%20L2794%20125%20L2811%20153%20Z%20M2789%20151%20L2807%20126%20L2824%20151%20Z%20M2800%20151%20L2813%20130%20L2826%20151%20Z%20M2809%20154%20L2821%20138%20L2833%20154%20Z%20M2816%20153%20L2829%20134%20L2841%20153%20Z%20M2829%20156%20L2841%20136%20L2854%20156%20Z%20M2833%20156%20L2848%20131%20L2863%20156%20Z%20M2843%20154%20L2858%20127%20L2874%20154%20Z%20M2851%20156%20L2868%20133%20L2886%20156%20Z%20M2863%20151%20L2875%20131%20L2887%20151%20Z%20M2871%20155%20L2882%20136%20L2892%20155%20Z%20M2881%20153%20L2891%20137%20L2901%20153%20Z%20M2890%20149%20L2899%20132%20L2908%20149%20Z%20M2898%20155%20L2912%20127%20L2927%20155%20Z%20M2912%20153%20L2925%20129%20L2938%20153%20Z%20M2922%20149%20L2934%20132%20L2946%20149%20Z%20M2928%20156%20L2947%20131%20L2965%20156%20Z%20M2946%20150%20L2957%20132%20L2968%20150%20Z%20M2941%20151%20L2963%20123%20L2986%20151%20Z%20M2950%20156%20L2971%20131%20L2991%20156%20Z%20M2956%20155%20L2978%20127%20L3000%20155%20Z%20M2972%20152%20L2986%20134%20L3000%20152%20Z%20M2980%20156%20L2995%20132%20L3010%20156%20Z%20M2992%20154%20L3002%20139%20L3013%20154%20Z%20M2992%20157%20L3014%20130%20L3036%20157%20Z%20M3011%20151%20L3024%20128%20L3036%20151%20Z%20M3022%20150%20L3034%20135%20L3045%20150%20Z%20M3026%20149%20L3043%20118%20L3059%20149%20Z%20M3039%20149%20L3052%20132%20L3065%20149%20Z%20M3041%20152%20L3064%20123%20L3086%20152%20Z%20M3054%20152%20L3072%20126%20L3089%20152%20Z%20M3064%20156%20L3080%20134%20L3096%20156%20Z%20M3082%20153%20L3092%20136%20L3103%20153%20Z%20M3091%20150%20L3102%20129%20L3114%20150%20Z%20M3092%20156%20L3111%20134%20L3129%20156%20Z%20M3096%20154%20L3123%20122%20L3149%20154%20Z%20M3123%20154%20L3134%20139%20L3145%20154%20Z%20M3122%20153%20L3142%20129%20L3163%20153%20Z%20M3141%20156%20L3153%20137%20L3165%20156%20Z%20M3146%20153%20L3159%20135%20L3172%20153%20Z%20M3149%20154%20L3166%20128%20L3182%20154%20Z%20M3158%20152%20L3175%20129%20L3191%20152%20Z%20M3167%20153%20L3181%20136%20L3195%20153%20Z%20M3171%20150%20L3188%20120%20L3206%20150%20Z%20M3185%20153%20L3198%20135%20L3210%20153%20Z%20M3192%20153%20L3206%20129%20L3219%20153%20Z%20M3206%20150%20L3216%20134%20L3226%20150%20Z%20M3204%20155%20L3225%20125%20L3245%20155%20Z%20M3222%20155%20L3236%20139%20L3250%20155%20Z%20M3224%20150%20L3243%20121%20L3261%20150%20Z%20M3237%20150%20L3255%20126%20L3274%20150%20Z%20M3258%20152%20L3267%20137%20L3276%20152%20Z%20M3259%20151%20L3273%20127%20L3287%20151%20Z%20M3266%20154%20L3284%20132%20L3302%20154%20Z%20M3276%20156%20L3296%20132%20L3316%20156%20Z%20M3286%20155%20L3303%20128%20L3320%20155%20Z%20M3298%20152%20L3314%20123%20L3330%20152%20Z%20M3302%20149%20L3325%20118%20L3349%20149%20Z%20M3324%20155%20L3335%20140%20L3346%20155%20Z%20M3320%20151%20L3342%20120%20L3365%20151%20Z%20M3332%20154%20L3350%20132%20L3367%20154%20Z%20M3349%20155%20L3356%20141%20L3364%20155%20Z%20M3349%20154%20L3364%20131%20L3378%20154%20Z%20M3359%20153%20L3372%20137%20L3386%20153%20Z%20M3359%20149%20L3383%20121%20L3407%20149%20Z%20M3380%20156%20L3391%20139%20L3403%20156%20Z%20M3395%20156%20L3403%20141%20L3411%20156%20Z%20M3400%20150%20L3414%20129%20L3428%20150%20Z%20M3409%20154%20L3426%20133%20L3443%20154%20Z%20M3421%20156%20L3432%20136%20L3444%20156%20Z%20M3434%20152%20L3442%20137%20L3451%20152%20Z%20M3436%20152%20L3452%20127%20L3467%20152%20Z%20M3443%20149%20L3458%20125%20L3473%20149%20Z%20M3451%20150%20L3467%20118%20L3483%20150%20Z%20M3466%20153%20L3478%20134%20L3489%20153%20Z%20M3469%20157%20L3485%20132%20L3502%20157%20Z%20M3488%20155%20L3498%20141%20L3509%20155%20Z%20M3490%20154%20L3511%20126%20L3531%20154%20Z%20M3504%20156%20L3519%20137%20L3534%20156%20Z%20M3516%20155%20L3532%20129%20L3548%20155%20Z%20M3526%20152%20L3543%20129%20L3560%20152%20Z%20M3542%20152%20L3553%20130%20L3564%20152%20Z%20M3540%20152%20L3561%20120%20L3582%20152%20Z%20M3557%20150%20L3569%20132%20L3580%20150%20Z%20M3555%20153%20L3575%20123%20L3594%20153%20Z%20M3574%20150%20L3585%20130%20L3596%20150%20Z%20M3578%20153%20L3593%20134%20L3608%20153%20Z%20M3589%20154%20L3605%20134%20L3622%20154%20Z%20M3600%20157%20L3612%20140%20L3624%20157%20Z%20M3602%20156%20L3620%20128%20L3639%20156%20Z%20M3608%20151%20L3627%20128%20L3645%20151%20Z%20M3627%20151%20L3635%20137%20L3643%20151%20Z%20M0%20136%20L3600%20136%20L3600%20700%20L0%20700%20Z'%20fill%3D'%2523000'%2F%3E%3C%2Fsvg%3E");
+
+  /* 城市天际线遮罩 */
+  --mask-city: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1200 260'%3E%3Cpath d='M0 260 L0 196 L0 196 L76 196 L76 37 L76 37 L160 37 L160 97 L160 97 L269 97 L212 97 L214 84 L216 97 L269 97 L269 112 L269 112 L346 112 L306 112 L308 95 L310 112 L346 112 L346 161 L346 161 L426 161 L384 161 L386 137 L388 161 L426 161 L426 127 L426 127 L512 127 L512 114 L512 114 L569 114 L569 117 L569 117 L650 117 L650 124 L650 124 L738 124 L738 32 L738 32 L838 32 L838 59 L838 59 L889 59 L889 149 L889 149 L955 149 L920 149 L922 129 L924 149 L955 149 L955 191 L955 191 L1006 191 L1006 134 L1006 134 L1107 134 L1107 136 L1107 136 L1200 136 L1200 260 Z' fill='%23000'/%3E%3C/svg%3E");
+
+  /* 积云遮罩：重叠圆堆出的积云轮廓（底缘齐平、顶缘错落），左右可平铺 */
+  --mask-cloud: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%20215%202400%20285'%3E%3Cg%20fill%3D'%2523000'%3E%3Ccircle%20cx%3D'147.7'%20cy%3D'403.6'%20r%3D'68.8'%2F%3E%3Ccircle%20cx%3D'215'%20cy%3D'390.9'%20r%3D'84.3'%2F%3E%3Ccircle%20cx%3D'287'%20cy%3D'405'%20r%3D'67.1'%2F%3E%3Ccircle%20cx%3D'82.6'%20cy%3D'419.1'%20r%3D'49.9'%2F%3E%3Ccircle%20cx%3D'349.7'%20cy%3D'420.5'%20r%3D'48.2'%2F%3E%3Ccircle%20cx%3D'175.5'%20cy%3D'413.5'%20r%3D'56.8'%2F%3E%3Ccircle%20cx%3D'256.8'%20cy%3D'414.9'%20r%3D'55'%2F%3E%3Ccircle%20cx%3D'40.8'%20cy%3D'436'%20r%3D'29.2'%2F%3E%3Ccircle%20cx%3D'391.5'%20cy%3D'437.4'%20r%3D'27.5'%2F%3E%3Ccircle%20cx%3D'512.3'%20cy%3D'334.5'%20r%3D'89.6'%2F%3E%3Ccircle%20cx%3D'600'%20cy%3D'318'%20r%3D'109.8'%2F%3E%3Ccircle%20cx%3D'693.7'%20cy%3D'336.4'%20r%3D'87.4'%2F%3E%3Ccircle%20cx%3D'427.6'%20cy%3D'354.7'%20r%3D'65'%2F%3E%3Ccircle%20cx%3D'775.4'%20cy%3D'356.6'%20r%3D'62.7'%2F%3E%3Ccircle%20cx%3D'548.6'%20cy%3D'347.4'%20r%3D'73.9'%2F%3E%3Ccircle%20cx%3D'654.4'%20cy%3D'349.2'%20r%3D'71.7'%2F%3E%3Ccircle%20cx%3D'373.2'%20cy%3D'376.8'%20r%3D'38.1'%2F%3E%3Ccircle%20cx%3D'829.8'%20cy%3D'378.6'%20r%3D'35.8'%2F%3E%3Ccircle%20cx%3D'964.9'%20cy%3D'446'%20r%3D'51.2'%2F%3E%3Ccircle%20cx%3D'1015'%20cy%3D'436.6'%20r%3D'62.7'%2F%3E%3Ccircle%20cx%3D'1068.6'%20cy%3D'447.1'%20r%3D'49.9'%2F%3E%3Ccircle%20cx%3D'916.5'%20cy%3D'457.6'%20r%3D'37.1'%2F%3E%3Ccircle%20cx%3D'1115.2'%20cy%3D'458.6'%20r%3D'35.8'%2F%3E%3Ccircle%20cx%3D'985.6'%20cy%3D'453.4'%20r%3D'42.2'%2F%3E%3Ccircle%20cx%3D'1046.1'%20cy%3D'454.4'%20r%3D'41'%2F%3E%3Ccircle%20cx%3D'885.4'%20cy%3D'470.2'%20r%3D'21.8'%2F%3E%3Ccircle%20cx%3D'1146.3'%20cy%3D'471.2'%20r%3D'20.5'%2F%3E%3Ccircle%20cx%3D'1314.8'%20cy%3D'363'%20r%3D'76.8'%2F%3E%3Ccircle%20cx%3D'1390'%20cy%3D'348.9'%20r%3D'94.1'%2F%3E%3Ccircle%20cx%3D'1470.4'%20cy%3D'364.6'%20r%3D'74.9'%2F%3E%3Ccircle%20cx%3D'1242.3'%20cy%3D'380.3'%20r%3D'55.7'%2F%3E%3Ccircle%20cx%3D'1540.3'%20cy%3D'381.9'%20r%3D'53.8'%2F%3E%3Ccircle%20cx%3D'1345.9'%20cy%3D'374'%20r%3D'63.4'%2F%3E%3Ccircle%20cx%3D'1436.7'%20cy%3D'375.6'%20r%3D'61.4'%2F%3E%3Ccircle%20cx%3D'1195.6'%20cy%3D'399.2'%20r%3D'32.6'%2F%3E%3Ccircle%20cx%3D'1587'%20cy%3D'400.8'%20r%3D'30.7'%2F%3E%3Ccircle%20cx%3D'1738.6'%20cy%3D'428.8'%20r%3D'57.6'%2F%3E%3Ccircle%20cx%3D'1795'%20cy%3D'418.1'%20r%3D'70.6'%2F%3E%3Ccircle%20cx%3D'1855.3'%20cy%3D'429.9'%20r%3D'56.2'%2F%3E%3Ccircle%20cx%3D'1684.2'%20cy%3D'441.8'%20r%3D'41.8'%2F%3E%3Ccircle%20cx%3D'1907.8'%20cy%3D'442.9'%20r%3D'40.3'%2F%3E%3Ccircle%20cx%3D'1762'%20cy%3D'437'%20r%3D'47.5'%2F%3E%3Ccircle%20cx%3D'1830'%20cy%3D'438.2'%20r%3D'46.1'%2F%3E%3Ccircle%20cx%3D'1649.2'%20cy%3D'455.9'%20r%3D'24.5'%2F%3E%3Ccircle%20cx%3D'1942.7'%20cy%3D'457.1'%20r%3D'23'%2F%3E%3Ccircle%20cx%3D'2088.6'%20cy%3D'331.8'%20r%3D'83.2'%2F%3E%3Ccircle%20cx%3D'2170'%20cy%3D'316.4'%20r%3D'101.9'%2F%3E%3Ccircle%20cx%3D'2257'%20cy%3D'333.5'%20r%3D'81.1'%2F%3E%3Ccircle%20cx%3D'2009.9'%20cy%3D'350.5'%20r%3D'60.3'%2F%3E%3Ccircle%20cx%3D'2332.9'%20cy%3D'352.2'%20r%3D'58.2'%2F%3E%3Ccircle%20cx%3D'2122.3'%20cy%3D'343.7'%20r%3D'68.6'%2F%3E%3Ccircle%20cx%3D'2220.5'%20cy%3D'345.4'%20r%3D'66.6'%2F%3E%3Ccircle%20cx%3D'1959.4'%20cy%3D'371'%20r%3D'35.4'%2F%3E%3Ccircle%20cx%3D'2383.4'%20cy%3D'372.7'%20r%3D'33.3'%2F%3E%3Ccircle%20cx%3D'404.9'%20cy%3D'286.1'%20r%3D'25.6'%2F%3E%3Ccircle%20cx%3D'430'%20cy%3D'282.6'%20r%3D'31.4'%2F%3E%3Ccircle%20cx%3D'456.8'%20cy%3D'286.5'%20r%3D'25'%2F%3E%3Ccircle%20cx%3D'380.8'%20cy%3D'290.5'%20r%3D'18.6'%2F%3E%3Ccircle%20cx%3D'480.1'%20cy%3D'290.9'%20r%3D'17.9'%2F%3E%3Ccircle%20cx%3D'415.3'%20cy%3D'288.9'%20r%3D'21.1'%2F%3E%3Ccircle%20cx%3D'445.6'%20cy%3D'289.3'%20r%3D'20.5'%2F%3E%3Ccircle%20cx%3D'365.2'%20cy%3D'295.3'%20r%3D'10.9'%2F%3E%3Ccircle%20cx%3D'495.7'%20cy%3D'295.7'%20r%3D'10.2'%2F%3E%3Ccircle%20cx%3D'1149.6'%20cy%3D'261.1'%20r%3D'20.8'%2F%3E%3Ccircle%20cx%3D'1170'%20cy%3D'258.2'%20r%3D'25.5'%2F%3E%3Ccircle%20cx%3D'1191.8'%20cy%3D'261.4'%20r%3D'20.3'%2F%3E%3Ccircle%20cx%3D'1130'%20cy%3D'264.7'%20r%3D'15.1'%2F%3E%3Ccircle%20cx%3D'1210.7'%20cy%3D'265'%20r%3D'14.6'%2F%3E%3Ccircle%20cx%3D'1158.1'%20cy%3D'263.4'%20r%3D'17.2'%2F%3E%3Ccircle%20cx%3D'1182.6'%20cy%3D'263.7'%20r%3D'16.6'%2F%3E%3Ccircle%20cx%3D'1117.3'%20cy%3D'268.5'%20r%3D'8.8'%2F%3E%3Ccircle%20cx%3D'1223.4'%20cy%3D'268.8'%20r%3D'8.3'%2F%3E%3Ccircle%20cx%3D'1951.5'%20cy%3D'273.1'%20r%3D'24'%2F%3E%3Ccircle%20cx%3D'1975'%20cy%3D'269.8'%20r%3D'29.4'%2F%3E%3Ccircle%20cx%3D'2000.1'%20cy%3D'273.5'%20r%3D'23.4'%2F%3E%3Ccircle%20cx%3D'1928.8'%20cy%3D'277.2'%20r%3D'17.4'%2F%3E%3Ccircle%20cx%3D'2022'%20cy%3D'277.6'%20r%3D'16.8'%2F%3E%3Ccircle%20cx%3D'1961.2'%20cy%3D'275.7'%20r%3D'19.8'%2F%3E%3Ccircle%20cx%3D'1989.6'%20cy%3D'276.1'%20r%3D'19.2'%2F%3E%3Ccircle%20cx%3D'1914.2'%20cy%3D'281.7'%20r%3D'10.2'%2F%3E%3Ccircle%20cx%3D'2036.6'%20cy%3D'282'%20r%3D'9.6'%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  /* 窗格贴片：暖色密集窗 / 冷暖混合稀疏窗，被天际线遮罩裁进楼体 */
+  --win-a: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20128%20128'%3E%3Crect%20x%3D'3.4'%20y%3D'2.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.91'%2F%3E%3Crect%20x%3D'19.0'%20y%3D'3.2'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.77'%2F%3E%3Crect%20x%3D'34.5'%20y%3D'3.1'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.85'%2F%3E%3Crect%20x%3D'51.7'%20y%3D'3.7'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.7'%2F%3E%3Crect%20x%3D'67.2'%20y%3D'3.5'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.86'%2F%3E%3Crect%20x%3D'114.9'%20y%3D'2.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.69'%2F%3E%3Crect%20x%3D'2.7'%20y%3D'17.3'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.75'%2F%3E%3Crect%20x%3D'35.7'%20y%3D'18.5'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.9'%2F%3E%3Crect%20x%3D'51.0'%20y%3D'17.3'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'67.5'%20y%3D'17.8'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.83'%2F%3E%3Crect%20x%3D'82.6'%20y%3D'18.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.68'%2F%3E%3Crect%20x%3D'98.4'%20y%3D'18.2'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.79'%2F%3E%3Crect%20x%3D'114.7'%20y%3D'17.3'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.73'%2F%3E%3Crect%20x%3D'3.3'%20y%3D'32.3'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.76'%2F%3E%3Crect%20x%3D'19.1'%20y%3D'32.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.69'%2F%3E%3Crect%20x%3D'50.8'%20y%3D'32.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'67.7'%20y%3D'33.4'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.8'%2F%3E%3Crect%20x%3D'82.9'%20y%3D'33.5'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.78'%2F%3E%3Crect%20x%3D'98.5'%20y%3D'32.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.73'%2F%3E%3Crect%20x%3D'2.4'%20y%3D'47.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.75'%2F%3E%3Crect%20x%3D'18.8'%20y%3D'47.9'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.89'%2F%3E%3Crect%20x%3D'34.5'%20y%3D'47.8'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.86'%2F%3E%3Crect%20x%3D'51.4'%20y%3D'47.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.88'%2F%3E%3Crect%20x%3D'83.6'%20y%3D'48.5'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'98.5'%20y%3D'48.0'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.66'%2F%3E%3Crect%20x%3D'3.5'%20y%3D'63.1'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.71'%2F%3E%3Crect%20x%3D'51.0'%20y%3D'63.2'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.76'%2F%3E%3Crect%20x%3D'67.6'%20y%3D'62.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.8'%2F%3E%3Crect%20x%3D'114.7'%20y%3D'63.0'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.73'%2F%3E%3Crect%20x%3D'3.5'%20y%3D'78.7'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.82'%2F%3E%3Crect%20x%3D'19.6'%20y%3D'78.1'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.82'%2F%3E%3Crect%20x%3D'35.3'%20y%3D'78.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.88'%2F%3E%3Crect%20x%3D'66.7'%20y%3D'77.5'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.66'%2F%3E%3Crect%20x%3D'99.6'%20y%3D'78.3'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.83'%2F%3E%3Crect%20x%3D'115.3'%20y%3D'78.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'2.3'%20y%3D'93.0'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.89'%2F%3E%3Crect%20x%3D'35.2'%20y%3D'92.4'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.79'%2F%3E%3Crect%20x%3D'51.3'%20y%3D'92.8'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.87'%2F%3E%3Crect%20x%3D'66.9'%20y%3D'93.1'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.81'%2F%3E%3Crect%20x%3D'83.1'%20y%3D'93.0'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.69'%2F%3E%3Crect%20x%3D'115.2'%20y%3D'93.0'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'3.2'%20y%3D'107.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.72'%2F%3E%3Crect%20x%3D'35.0'%20y%3D'107.6'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.93'%2F%3E%3Crect%20x%3D'50.9'%20y%3D'108.4'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.7'%2F%3E%3Crect%20x%3D'67.1'%20y%3D'107.7'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.83'%2F%3E%3Crect%20x%3D'99.6'%20y%3D'107.7'%20width%3D'6'%20height%3D'8'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.92'%2F%3E%3C%2Fsvg%3E");
+  --win-b: url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%2096%2096'%3E%3Crect%20x%3D'2.6'%20y%3D'3.1'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.97'%2F%3E%3Crect%20x%3D'24.8'%20y%3D'2.5'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'36.5'%20y%3D'3.0'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(196%2C222%2C255)'%20fill-opacity%3D'0.64'%2F%3E%3Crect%20x%3D'57.6'%20y%3D'3.3'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'69.5'%20y%3D'2.9'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.72'%2F%3E%3Crect%20x%3D'79.8'%20y%3D'3.5'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.99'%2F%3E%3Crect%20x%3D'3.0'%20y%3D'15.3'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.69'%2F%3E%3Crect%20x%3D'13.7'%20y%3D'14.8'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.62'%2F%3E%3Crect%20x%3D'24.6'%20y%3D'14.9'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.71'%2F%3E%3Crect%20x%3D'36.1'%20y%3D'14.6'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.76'%2F%3E%3Crect%20x%3D'47.3'%20y%3D'15.0'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.77'%2F%3E%3Crect%20x%3D'80.0'%20y%3D'15.4'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.71'%2F%3E%3Crect%20x%3D'3.5'%20y%3D'26.6'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.69'%2F%3E%3Crect%20x%3D'36.3'%20y%3D'27.4'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(196%2C222%2C255)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'46.8'%20y%3D'27.5'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'24.6'%20y%3D'39.0'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.78'%2F%3E%3Crect%20x%3D'46.9'%20y%3D'39.4'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.63'%2F%3E%3Crect%20x%3D'80.2'%20y%3D'38.9'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.78'%2F%3E%3Crect%20x%3D'2.9'%20y%3D'50.8'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C214%2C160)'%20fill-opacity%3D'0.7'%2F%3E%3Crect%20x%3D'14.3'%20y%3D'50.6'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.83'%2F%3E%3Crect%20x%3D'25.2'%20y%3D'50.9'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.99'%2F%3E%3Crect%20x%3D'47.0'%20y%3D'50.7'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.88'%2F%3E%3Crect%20x%3D'58.5'%20y%3D'50.8'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.85'%2F%3E%3Crect%20x%3D'3.2'%20y%3D'62.7'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.7'%2F%3E%3Crect%20x%3D'47.5'%20y%3D'63.2'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.8'%2F%3E%3Crect%20x%3D'68.6'%20y%3D'63.4'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C212%2C155)'%20fill-opacity%3D'0.97'%2F%3E%3Crect%20x%3D'79.5'%20y%3D'63.0'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'13.8'%20y%3D'75.5'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.74'%2F%3E%3Crect%20x%3D'58.4'%20y%3D'75.0'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.84'%2F%3E%3Crect%20x%3D'68.8'%20y%3D'75.4'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.7'%2F%3E%3Crect%20x%3D'35.5'%20y%3D'87.3'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C226%2C182)'%20fill-opacity%3D'0.65'%2F%3E%3Crect%20x%3D'57.5'%20y%3D'87.3'%20width%3D'4'%20height%3D'5'%20rx%3D'0.6'%20fill%3D'rgb(255%2C196%2C132)'%20fill-opacity%3D'0.85'%2F%3E%3C%2Fsvg%3E");
+  /* 树干遮罩：锥形收梢 + 根部外扩 + 圆柱明暗（明暗直接烘进遮罩的透明度里） */
+  --mask-trunks: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%203600%20700%27%3E%3Cg%3E%3Cpath%20d%3D%27M-80.0%20740.0%20L-78.7%20545.0%20L-77.5%20350.0%20L-76.2%20155.0%20L-74.9%20-40.0%20L-69.0%20-40.0%20L-69.4%20155.0%20L-69.9%20350.0%20L-70.3%20545.0%20L-70.8%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M28.3%20740.0%20L27.5%20545.0%20L26.7%20350.0%20L25.9%20155.0%20L25.1%20-40.0%20L31.9%20-40.0%20L33.6%20155.0%20L35.4%20350.0%20L37.2%20545.0%20L38.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M146.1%20740.0%20L146.7%20545.0%20L147.3%20350.0%20L147.9%20155.0%20L148.5%20-40.0%20L156.3%20-40.0%20L156.8%20155.0%20L157.3%20350.0%20L157.8%20545.0%20L158.3%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M250.5%20740.0%20L248.7%20545.0%20L246.9%20350.0%20L245.1%20155.0%20L243.3%20-40.0%20L249.4%20-40.0%20L252.1%20155.0%20L254.8%20350.0%20L257.4%20545.0%20L260.1%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M345.4%20740.0%20L344.0%20545.0%20L342.5%20350.0%20L341.1%20155.0%20L339.6%20-40.0%20L346.8%20-40.0%20L349.2%20155.0%20L351.6%20350.0%20L354.1%20545.0%20L356.5%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M463.8%20740.0%20L463.0%20545.0%20L462.3%20350.0%20L461.5%20155.0%20L460.7%20-40.0%20L466.8%20-40.0%20L468.4%20155.0%20L470.1%20350.0%20L471.7%20545.0%20L473.3%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M541.5%20740.0%20L543.2%20545.0%20L544.9%20350.0%20L546.5%20155.0%20L548.2%20-40.0%20L556.5%20-40.0%20L556.0%20155.0%20L555.5%20350.0%20L555.0%20545.0%20L554.5%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M666.0%20740.0%20L664.4%20545.0%20L662.9%20350.0%20L661.3%20155.0%20L659.7%20-40.0%20L666.9%20-40.0%20L669.5%20155.0%20L672.1%20350.0%20L674.7%20545.0%20L677.3%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M760.4%20740.0%20L759.2%20545.0%20L757.9%20350.0%20L756.7%20155.0%20L755.4%20-40.0%20L762.3%20-40.0%20L764.5%20155.0%20L766.7%20350.0%20L768.9%20545.0%20L771.2%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M886.7%20740.0%20L885.6%20545.0%20L884.5%20350.0%20L883.4%20155.0%20L882.3%20-40.0%20L888.8%20-40.0%20L890.8%20155.0%20L892.8%20350.0%20L894.8%20545.0%20L896.8%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1005.3%20740.0%20L1007.7%20545.0%20L1010.0%20350.0%20L1012.3%20155.0%20L1014.7%20-40.0%20L1020.5%20-40.0%20L1018.9%20155.0%20L1017.4%20350.0%20L1015.9%20545.0%20L1014.4%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1103.9%20740.0%20L1103.7%20545.0%20L1103.5%20350.0%20L1103.3%20155.0%20L1103.1%20-40.0%20L1110.1%20-40.0%20L1111.3%20155.0%20L1112.5%20350.0%20L1113.7%20545.0%20L1114.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1206.1%20740.0%20L1204.5%20545.0%20L1202.8%20350.0%20L1201.1%20155.0%20L1199.5%20-40.0%20L1205.5%20-40.0%20L1208.0%20155.0%20L1210.5%20350.0%20L1213.0%20545.0%20L1215.5%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1326.5%20740.0%20L1328.2%20545.0%20L1329.9%20350.0%20L1331.6%20155.0%20L1333.3%20-40.0%20L1339.4%20-40.0%20L1338.6%20155.0%20L1337.7%20350.0%20L1336.9%20545.0%20L1336.1%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1412.9%20740.0%20L1415.3%20545.0%20L1417.6%20350.0%20L1420.0%20155.0%20L1422.3%20-40.0%20L1430.5%20-40.0%20L1429.3%20155.0%20L1428.2%20350.0%20L1427.0%20545.0%20L1425.8%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1531.0%20740.0%20L1531.9%20545.0%20L1532.8%20350.0%20L1533.7%20155.0%20L1534.6%20-40.0%20L1542.3%20-40.0%20L1542.4%20155.0%20L1542.6%20350.0%20L1542.8%20545.0%20L1542.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1646.9%20740.0%20L1647.2%20545.0%20L1647.5%20350.0%20L1647.8%20155.0%20L1648.1%20-40.0%20L1653.9%20-40.0%20L1654.4%20155.0%20L1654.9%20350.0%20L1655.4%20545.0%20L1655.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1765.0%20740.0%20L1767.3%20545.0%20L1769.6%20350.0%20L1771.9%20155.0%20L1774.3%20-40.0%20L1780.3%20-40.0%20L1778.8%20155.0%20L1777.3%20350.0%20L1775.8%20545.0%20L1774.4%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1886.5%20740.0%20L1886.4%20545.0%20L1886.2%20350.0%20L1886.1%20155.0%20L1885.9%20-40.0%20L1892.6%20-40.0%20L1893.6%20155.0%20L1894.7%20350.0%20L1895.8%20545.0%20L1896.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M1986.3%20740.0%20L1989.0%20545.0%20L1991.7%20350.0%20L1994.4%20155.0%20L1997.1%20-40.0%20L2003.6%20-40.0%20L2001.9%20155.0%20L2000.1%20350.0%20L1998.3%20545.0%20L1996.6%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2082.7%20740.0%20L2081.2%20545.0%20L2079.8%20350.0%20L2078.3%20155.0%20L2076.9%20-40.0%20L2082.4%20-40.0%20L2084.6%20155.0%20L2086.8%20350.0%20L2089.1%20545.0%20L2091.3%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2194.6%20740.0%20L2195.2%20545.0%20L2195.8%20350.0%20L2196.3%20155.0%20L2196.9%20-40.0%20L2205.2%20-40.0%20L2205.8%20155.0%20L2206.4%20350.0%20L2207.0%20545.0%20L2207.6%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2299.1%20740.0%20L2300.8%20545.0%20L2302.4%20350.0%20L2304.0%20155.0%20L2305.6%20-40.0%20L2312.6%20-40.0%20L2312.0%20155.0%20L2311.4%20350.0%20L2310.7%20545.0%20L2310.1%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2387.7%20740.0%20L2388.4%20545.0%20L2389.2%20350.0%20L2390.0%20155.0%20L2390.7%20-40.0%20L2397.9%20-40.0%20L2398.2%20155.0%20L2398.4%20350.0%20L2398.7%20545.0%20L2398.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2497.3%20740.0%20L2496.2%20545.0%20L2495.2%20350.0%20L2494.1%20155.0%20L2493.0%20-40.0%20L2499.0%20-40.0%20L2500.9%20155.0%20L2502.8%20350.0%20L2504.7%20545.0%20L2506.6%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2590.7%20740.0%20L2590.6%20545.0%20L2590.5%20350.0%20L2590.3%20155.0%20L2590.2%20-40.0%20L2598.3%20-40.0%20L2599.6%20155.0%20L2600.9%20350.0%20L2602.1%20545.0%20L2603.4%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2700.4%20740.0%20L2699.1%20545.0%20L2697.8%20350.0%20L2696.4%20155.0%20L2695.1%20-40.0%20L2701.4%20-40.0%20L2703.6%20155.0%20L2705.9%20350.0%20L2708.1%20545.0%20L2710.3%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2779.7%20740.0%20L2781.5%20545.0%20L2783.3%20350.0%20L2785.1%20155.0%20L2786.9%20-40.0%20L2794.7%20-40.0%20L2794.0%20155.0%20L2793.3%20350.0%20L2792.6%20545.0%20L2791.9%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M2877.4%20740.0%20L2878.7%20545.0%20L2880.0%20350.0%20L2881.3%20155.0%20L2882.6%20-40.0%20L2890.0%20-40.0%20L2889.8%20155.0%20L2889.5%20350.0%20L2889.2%20545.0%20L2889.0%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3001.7%20740.0%20L3001.9%20545.0%20L3002.0%20350.0%20L3002.2%20155.0%20L3002.3%20-40.0%20L3010.5%20-40.0%20L3011.5%20155.0%20L3012.5%20350.0%20L3013.5%20545.0%20L3014.5%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3131.9%20740.0%20L3132.9%20545.0%20L3133.9%20350.0%20L3134.9%20155.0%20L3135.9%20-40.0%20L3144.1%20-40.0%20L3144.3%20155.0%20L3144.4%20350.0%20L3144.6%20545.0%20L3144.8%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3256.7%20740.0%20L3256.6%20545.0%20L3256.5%20350.0%20L3256.5%20155.0%20L3256.4%20-40.0%20L3263.2%20-40.0%20L3264.3%20155.0%20L3265.3%20350.0%20L3266.4%20545.0%20L3267.4%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3346.3%20740.0%20L3345.3%20545.0%20L3344.3%20350.0%20L3343.4%20155.0%20L3342.4%20-40.0%20L3350.4%20-40.0%20L3352.5%20155.0%20L3354.5%20350.0%20L3356.6%20545.0%20L3358.7%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3428.3%20740.0%20L3430.1%20545.0%20L3431.9%20350.0%20L3433.6%20155.0%20L3435.4%20-40.0%20L3443.2%20-40.0%20L3442.5%20155.0%20L3441.8%20350.0%20L3441.1%20545.0%20L3440.4%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3531.5%20740.0%20L3530.1%20545.0%20L3528.6%20350.0%20L3527.2%20155.0%20L3525.7%20-40.0%20L3533.5%20-40.0%20L3536.1%20155.0%20L3538.7%20350.0%20L3541.2%20545.0%20L3543.8%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3Cpath%20d%3D%27M3623.2%20740.0%20L3623.3%20545.0%20L3623.4%20350.0%20L3623.5%20155.0%20L3623.5%20-40.0%20L3629.8%20-40.0%20L3630.6%20155.0%20L3631.4%20350.0%20L3632.2%20545.0%20L3633.0%20740.0%20Z%27%20fill%3D%27%23fff%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+
+  /* 近树专用：疏而粗，每根独立 path 自带圆柱明暗（见 env-src/_trunks_near.txt） */
+  --mask-trunks-near: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%201440%20700%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27a%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%270%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%27.52%27%2F%3E%3Cstop%20offset%3D%27.18%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%27.96%27%2F%3E%3Cstop%20offset%3D%27.5%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%271%27%2F%3E%3Cstop%20offset%3D%27.8%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%27.78%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%23fff%27%20stop-opacity%3D%27.46%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Cg%3E%3Cpath%20d%3D%27M-110.0%20740.0%20L-109.2%20675.0%20L-108.5%20610.0%20L-107.7%20545.0%20L-106.9%20480.0%20L-106.1%20415.0%20L-105.4%20350.0%20L-104.6%20285.0%20L-103.8%20220.0%20L-103.0%20155.0%20L-102.3%2090.0%20L-101.5%2025.0%20L-100.7%20-40.0%20L-86.7%20-40.0%20L-86.8%2025.0%20L-86.9%2090.0%20L-87.0%20155.0%20L-87.1%20220.0%20L-87.2%20285.0%20L-87.3%20350.0%20L-87.4%20415.0%20L-87.6%20480.0%20L-87.7%20545.0%20L-87.8%20610.0%20L-87.9%20675.0%20L-88.0%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.96%27%2F%3E%3Cpath%20d%3D%27M55.6%20740.0%20L56.7%20675.0%20L57.8%20610.0%20L59.0%20545.0%20L60.1%20480.0%20L61.2%20415.0%20L62.3%20350.0%20L63.4%20285.0%20L64.6%20220.0%20L65.7%20155.0%20L66.8%2090.0%20L67.9%2025.0%20L69.0%20-40.0%20L83.7%20-40.0%20L83.3%2025.0%20L82.8%2090.0%20L82.4%20155.0%20L82.0%20220.0%20L81.5%20285.0%20L81.1%20350.0%20L80.7%20415.0%20L80.3%20480.0%20L79.8%20545.0%20L79.4%20610.0%20L79.0%20675.0%20L78.5%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.81%27%2F%3E%3Cpath%20d%3D%27M185.9%20740.0%20L186.6%20675.0%20L187.2%20610.0%20L187.8%20545.0%20L188.5%20480.0%20L189.1%20415.0%20L189.8%20350.0%20L190.4%20285.0%20L191.0%20220.0%20L191.7%20155.0%20L192.3%2090.0%20L193.0%2025.0%20L193.6%20-40.0%20L209.3%20-40.0%20L209.4%2025.0%20L209.5%2090.0%20L209.6%20155.0%20L209.7%20220.0%20L209.8%20285.0%20L209.9%20350.0%20L210.0%20415.0%20L210.1%20480.0%20L210.2%20545.0%20L210.3%20610.0%20L210.4%20675.0%20L210.5%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.98%27%2F%3E%3Cpath%20d%3D%27M291.1%20740.0%20L290.9%20675.0%20L290.8%20610.0%20L290.6%20545.0%20L290.5%20480.0%20L290.3%20415.0%20L290.1%20350.0%20L290.0%20285.0%20L289.8%20220.0%20L289.7%20155.0%20L289.5%2090.0%20L289.4%2025.0%20L289.2%20-40.0%20L302.5%20-40.0%20L303.3%2025.0%20L304.1%2090.0%20L304.8%20155.0%20L305.6%20220.0%20L306.4%20285.0%20L307.2%20350.0%20L307.9%20415.0%20L308.7%20480.0%20L309.5%20545.0%20L310.3%20610.0%20L311.0%20675.0%20L311.8%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.91%27%2F%3E%3Cpath%20d%3D%27M427.4%20740.0%20L427.2%20675.0%20L426.9%20610.0%20L426.7%20545.0%20L426.4%20480.0%20L426.1%20415.0%20L425.9%20350.0%20L425.6%20285.0%20L425.3%20220.0%20L425.1%20155.0%20L424.8%2090.0%20L424.5%2025.0%20L424.3%20-40.0%20L435.2%20-40.0%20L436.0%2025.0%20L436.8%2090.0%20L437.6%20155.0%20L438.3%20220.0%20L439.1%20285.0%20L439.9%20350.0%20L440.7%20415.0%20L441.4%20480.0%20L442.2%20545.0%20L443.0%20610.0%20L443.8%20675.0%20L444.5%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.86%27%2F%3E%3Cpath%20d%3D%27M586.2%20740.0%20L585.9%20675.0%20L585.6%20610.0%20L585.4%20545.0%20L585.1%20480.0%20L584.8%20415.0%20L584.5%20350.0%20L584.2%20285.0%20L584.0%20220.0%20L583.7%20155.0%20L583.4%2090.0%20L583.1%2025.0%20L582.9%20-40.0%20L597.7%20-40.0%20L598.6%2025.0%20L599.6%2090.0%20L600.6%20155.0%20L601.5%20220.0%20L602.5%20285.0%20L603.5%20350.0%20L604.5%20415.0%20L605.4%20480.0%20L606.4%20545.0%20L607.4%20610.0%20L608.3%20675.0%20L609.3%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.96%27%2F%3E%3Cpath%20d%3D%27M691.9%20740.0%20L691.5%20675.0%20L691.1%20610.0%20L690.8%20545.0%20L690.4%20480.0%20L690.1%20415.0%20L689.7%20350.0%20L689.4%20285.0%20L689.0%20220.0%20L688.7%20155.0%20L688.3%2090.0%20L687.9%2025.0%20L687.6%20-40.0%20L701.6%20-40.0%20L702.6%2025.0%20L703.7%2090.0%20L704.7%20155.0%20L705.7%20220.0%20L706.7%20285.0%20L707.7%20350.0%20L708.7%20415.0%20L709.7%20480.0%20L710.8%20545.0%20L711.8%20610.0%20L712.8%20675.0%20L713.8%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.80%27%2F%3E%3Cpath%20d%3D%27M852.0%20740.0%20L851.8%20675.0%20L851.5%20610.0%20L851.3%20545.0%20L851.1%20480.0%20L850.8%20415.0%20L850.6%20350.0%20L850.3%20285.0%20L850.1%20220.0%20L849.9%20155.0%20L849.6%2090.0%20L849.4%2025.0%20L849.1%20-40.0%20L861.1%20-40.0%20L861.9%2025.0%20L862.7%2090.0%20L863.5%20155.0%20L864.3%20220.0%20L865.1%20285.0%20L865.9%20350.0%20L866.7%20415.0%20L867.5%20480.0%20L868.3%20545.0%20L869.1%20610.0%20L869.9%20675.0%20L870.7%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%271.00%27%2F%3E%3Cpath%20d%3D%27M1009.0%20740.0%20L1010.1%20675.0%20L1011.3%20610.0%20L1012.4%20545.0%20L1013.5%20480.0%20L1014.7%20415.0%20L1015.8%20350.0%20L1017.0%20285.0%20L1018.1%20220.0%20L1019.2%20155.0%20L1020.4%2090.0%20L1021.5%2025.0%20L1022.6%20-40.0%20L1035.0%20-40.0%20L1034.4%2025.0%20L1033.9%2090.0%20L1033.3%20155.0%20L1032.8%20220.0%20L1032.2%20285.0%20L1031.7%20350.0%20L1031.1%20415.0%20L1030.5%20480.0%20L1030.0%20545.0%20L1029.4%20610.0%20L1028.9%20675.0%20L1028.3%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.91%27%2F%3E%3Cpath%20d%3D%27M1151.8%20740.0%20L1152.9%20675.0%20L1154.0%20610.0%20L1155.1%20545.0%20L1156.2%20480.0%20L1157.3%20415.0%20L1158.4%20350.0%20L1159.4%20285.0%20L1160.5%20220.0%20L1161.6%20155.0%20L1162.7%2090.0%20L1163.8%2025.0%20L1164.9%20-40.0%20L1176.8%20-40.0%20L1176.3%2025.0%20L1175.8%2090.0%20L1175.2%20155.0%20L1174.7%20220.0%20L1174.2%20285.0%20L1173.6%20350.0%20L1173.1%20415.0%20L1172.6%20480.0%20L1172.1%20545.0%20L1171.5%20610.0%20L1171.0%20675.0%20L1170.5%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.94%27%2F%3E%3Cpath%20d%3D%27M1315.9%20740.0%20L1315.9%20675.0%20L1315.9%20610.0%20L1315.9%20545.0%20L1315.9%20480.0%20L1315.9%20415.0%20L1315.9%20350.0%20L1315.9%20285.0%20L1315.9%20220.0%20L1315.9%20155.0%20L1315.9%2090.0%20L1315.9%2025.0%20L1315.8%20-40.0%20L1331.3%20-40.0%20L1332.0%2025.0%20L1332.8%2090.0%20L1333.5%20155.0%20L1334.2%20220.0%20L1335.0%20285.0%20L1335.7%20350.0%20L1336.4%20415.0%20L1337.2%20480.0%20L1337.9%20545.0%20L1338.6%20610.0%20L1339.3%20675.0%20L1340.1%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.87%27%2F%3E%3Cpath%20d%3D%27M1424.7%20740.0%20L1424.2%20675.0%20L1423.6%20610.0%20L1423.1%20545.0%20L1422.6%20480.0%20L1422.1%20415.0%20L1421.5%20350.0%20L1421.0%20285.0%20L1420.5%20220.0%20L1420.0%20155.0%20L1419.4%2090.0%20L1418.9%2025.0%20L1418.4%20-40.0%20L1430.0%20-40.0%20L1431.1%2025.0%20L1432.2%2090.0%20L1433.2%20155.0%20L1434.3%20220.0%20L1435.4%20285.0%20L1436.4%20350.0%20L1437.5%20415.0%20L1438.6%20480.0%20L1439.6%20545.0%20L1440.7%20610.0%20L1441.8%20675.0%20L1442.9%20740.0%20Z%27%20fill%3D%27url%28%23a%29%27%20opacity%3D%270.86%27%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+}
+
+/* 每个环境是一块比视口更大的画布，给视差留出余量 */
+.env__scene {
+  position: absolute;
+  inset: calc(-1 * var(--env-over)) -6%;
+  opacity: 0;
+  /* 不写 transition：淡入淡出由脚本按滚动进度逐帧写入，才跟手 */
+  will-change: opacity;
+}
+.env__scene.is-on { opacity: 1; }
+
+.env__l {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  will-change: transform;
+}
+/* 贴地元素（树线 / 天际线）：用 vh 定位，保证基座被视口下沿切掉 */
+.env__l--floor-far,
+.env__l--floor-mid,
+.env__l--floor-near,
+.env__l--skyline-far,
+.env__l--skyline-mid,
+.env__l--skyline-near {
+  inset: auto 0 0 0;
+  background-image: none;
+}
+.env__l--floor-far,
+.env__l--floor-mid,
+.env__l--floor-near {
+  -webkit-mask-image: var(--mask-trees);
+  mask-image: var(--mask-trees);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-position: center bottom;
+  mask-position: center bottom;
+  -webkit-mask-size: auto 100%;
+  mask-size: auto 100%;
+}
+.env__l--skyline-far,
+.env__l--skyline-mid,
+.env__l--skyline-near {
+  -webkit-mask-image: var(--mask-city);
+  mask-image: var(--mask-city);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-position: center bottom;
+  mask-position: center bottom;
+  -webkit-mask-size: auto 100%;
+  mask-size: auto 100%;
+  /* 窗格点阵：被上面的遮罩裁进楼体轮廓里，就成了万家灯火 */
+  background-image: radial-gradient(rgba(255, 208, 146, .88) 1.3px, transparent 1.7px);
+  background-size: 19px 23px;
+  background-repeat: repeat;
+  background-position: center bottom;
+}
+
+/* 云层：与树线 / 天际线同一套遮罩做法，靠尺寸与纵向位置分出远近 */
+.env__scene[data-scene="sky"] .env__l--far,
+.env__scene[data-scene="sky"] .env__l--near,
+.env__scene[data-scene="cloud"] .env__l--far,
+.env__scene[data-scene="cloud"] .env__l--near {
+  background-image: none;
+  -webkit-mask-image: var(--mask-cloud);
+  mask-image: var(--mask-cloud);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+}
+
+/* ---------- 穿越特效画布（浮在内容之上、导航之下） ---------- */
+.env__fx {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .35s var(--ease);
+}
+.env__fx.is-on { opacity: 1; }
+
+/* ============================================================
+   场景 1 · 云海起飞
+   ============================================================ */
+.env__scene[data-scene="sky"] .env__l--base {
+  background-image: linear-gradient(180deg,
+    #2f7ac0 0%, #5aa0d8 18%, #95c4e6 38%, #c9e1f1 58%, #ece6d6 78%, #ffeecd 100%);
+}
+.env__scene[data-scene="sky"] .env__l--sun {
+  background-image: radial-gradient(circle at 76% 24%,
+    rgba(255, 254, 248, .98) 0%, rgba(255, 243, 209, .58) 7%,
+    rgba(255, 233, 182, .22) 17%, rgba(255, 226, 172, .07) 30%, transparent 46%);
+}
+.env__scene[data-scene="sky"] .env__l--far {
+  background-image: linear-gradient(180deg, #f7fbff 0%, #eaf2fa 58%, #dbe6f3 100%);
+  background-size: cover;
+  opacity: .8;
+  -webkit-mask-size: 230vw auto;
+  mask-size: 230vw auto;
+  -webkit-mask-position: 0% 1%;
+  mask-position: 0% 1%;
+  filter: blur(3.5px);
+}
+.env__scene[data-scene="sky"] .env__l--near {
+  background-image: linear-gradient(180deg, #ffffff 0%, #fbfdff 52%, #ecf2f9 100%);
+  background-size: cover;
+  opacity: .97;
+  -webkit-mask-size: 310vw auto;
+  mask-size: 310vw auto;
+  -webkit-mask-position: 0% 22%;
+  mask-position: 0% 22%;
+  filter: blur(2px);
+}
+
+/* ============================================================
+   场景 2 · 穿越云层
+   ============================================================ */
+.env__scene[data-scene="cloud"] .env__l--base {
+  background-image: linear-gradient(180deg,
+    #6ba3d2 0%, #a6cbe4 28%, #d9e8f2 56%, #f2f7fa 80%, #ffffff 100%);
+}
+.env__scene[data-scene="cloud"] .env__l--far {
+  background-image: linear-gradient(180deg, #eef5fd 0%, #dfeaf7 100%);
+  background-size: cover;
+  opacity: .85;
+  -webkit-mask-size: 300vw auto;
+  mask-size: 300vw auto;
+  -webkit-mask-position: 0% -18%;
+  mask-position: 0% -18%;
+  filter: blur(9px);
+}
+.env__scene[data-scene="cloud"] .env__l--near {
+  background-image: linear-gradient(180deg, #ffffff 0%, #f8fbfe 46%, #e8eff8 100%);
+  background-size: cover;
+  opacity: .97;
+  -webkit-mask-size: 420vw auto;
+  mask-size: 420vw auto;
+  -webkit-mask-position: 0% 16%;
+  mask-position: 0% 16%;
+  filter: blur(6px);
+}
+.env__scene[data-scene="cloud"] .env__l--veil {
+  background-image: linear-gradient(180deg,
+    rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .24) 40%, rgba(255, 255, 255, .72) 100%);
+}
+
+/* ============================================================
+   场景 3 · 森林上方
+   ============================================================ */
+.env__scene[data-scene="forest"] .env__l--base {
+  background-image: linear-gradient(180deg,
+    #7db6e0 0%, #a9cfeb 22%, #d5e6f0 40%, #eaebdd 54%, #dde6cd 64%, #cddcbb 100%);
+}
+.env__scene[data-scene="forest"] .env__l--glow {
+  background-image: radial-gradient(ellipse 62% 26% at 66% 56%,
+    rgba(255, 249, 220, .55) 0%, rgba(255, 244, 200, .18) 46%, transparent 76%);
+}
+
+/* 森林三层：同一形状不同尺度 —— 远处小树贴着地平线，越近越大 */
+.env__scene[data-scene="forest"] .env__l--floor-far {
+  height: 52vh;
+  bottom: 6.6vh;
+  background-image: linear-gradient(180deg, #c9dcd6 0%, #aecac2 100%);
+  opacity: .92;
+}
+.env__scene[data-scene="forest"] .env__l--floor-mid {
+  height: 62.5vh;
+  bottom: -8.4vh;
+  background-image: linear-gradient(180deg, #8bb888 0%, #6da06b 100%);
+}
+.env__scene[data-scene="forest"] .env__l--floor-near {
+  height: 87.5vh;
+  bottom: -41vh;
+  background-image: linear-gradient(180deg, #468550 0%, #37734b 30%, #244d32 62%, #17351f 100%);
+}
+
+/* ============================================================
+   场景 4 · 林间低飞
+   ------------------------------------------------------------
+   ⚠ 这一屏曾经整屏都是「几百像素宽的半透明竖带」，不像林子。
+   根因不在颜色，而在遮罩的缩放：
+   --mask-trunks 的 viewBox 高 700，而层高是整幅画布（约 1150px），
+   mask-size: auto 100% 于是把贴片横向放大到约 4600px，
+   单根树干被撑成 300~700px 宽 —— 剩下的就是几条玻璃板。
+   修法两条一起上：
+   (1) 所有层 top/bottom 用 var(--env-over) 对齐到视口（层高 = 900px），
+       遮罩缩放变成可预测的 1 单位 ≈ 1.29px；
+   (2) 遮罩重新生成成 116 根细密树干（.workbuddy/env-src/_trunks.txt），
+       屏幕上可见约 19 根主树干 + 13 根背景细树，才有林子的密度。
+   另加 --mist（林间雾）把远近树干拉开层次，
+   --veil 里补出林下地平线，避免「上下都是竖条」的平铺感。
+   ============================================================ */
+
+.env__scene[data-scene="grove"] .env__l--trunks-far,
+.env__scene[data-scene="grove"] .env__l--leaves,
+.env__scene[data-scene="grove"] .env__l--mist,
+.env__scene[data-scene="grove"] .env__l--beams,
+.env__scene[data-scene="grove"] .env__l--trunks-near,
+.env__scene[data-scene="grove"] .env__l--canopy,
+.env__scene[data-scene="grove"] .env__l--veil {
+  top: var(--env-over);
+  bottom: var(--env-over);
+  left: 0;
+  right: 0;
+}
+
+/* 林间透光：上暖、中亮、下暗 */
+.env__scene[data-scene="grove"] .env__l--base {
+  background-image:
+    radial-gradient(ellipse 52% 38% at 58% 26%,
+      rgba(255, 255, 242, .62) 0%, rgba(255, 252, 228, .26) 46%, rgba(0, 0, 0, 0) 78%),
+    radial-gradient(ellipse 62% 40% at 52% 48%,
+      rgba(250, 255, 232, .72) 0%, rgba(238, 248, 214, .34) 50%, rgba(0, 0, 0, 0) 80%),
+    linear-gradient(180deg,
+      #f2f8d8 0%, #e0eeba 12%, #c2da9a 30%, #9dc47e 50%,
+      #6f9a5d 70%, #3f6a40 86%, #20402a 100%);
+}
+
+/* 远树：虚化，只留成排树干与透进来的光 */
+.env__scene[data-scene="grove"] .env__l--trunks-far {
+  background-color: #a3c08d;
+  background-image: none;
+  -webkit-mask-image: var(--mask-trunks);
+  mask-image: var(--mask-trunks);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-position: 0 100%;
+  mask-position: 0 100%;
+  -webkit-mask-size: auto 112%;
+  mask-size: auto 112%;
+  filter: blur(3px);
+  opacity: .5;
+}
+
+/* 头顶枝叶：贴着画面上缘铺开，并且是横向拉长的宽椭圆。
+   之前放在 12%~38% 高度上，模糊后读起来像一团团悬浮的「污渍」；
+   枝叶只该出现在头顶，所以整体上移到 2%~16%，横向拉宽、纵向压扁，
+   再加大模糊，才能与 --canopy 的暗带连成「一整片树冠」。 */
+.env__scene[data-scene="grove"] .env__l--leaves {
+  background-image:
+    radial-gradient(ellipse 26% 6.5% at 16% 7%, rgba(9, 32, 18, .66) 0%, rgba(9, 32, 18, .22) 54%, transparent 80%),
+    radial-gradient(ellipse 31% 7% at 58% 4%, rgba(7, 26, 15, .62) 0%, rgba(7, 26, 15, .2) 54%, transparent 82%),
+    radial-gradient(ellipse 22% 6% at 88% 9%, rgba(10, 34, 20, .54) 0%, rgba(10, 34, 20, .16) 56%, transparent 82%),
+    radial-gradient(ellipse 19% 5% at 34% 14%, rgba(10, 33, 19, .4) 0%, transparent 84%),
+    radial-gradient(ellipse 17% 4.5% at 74% 16%, rgba(10, 33, 19, .32) 0%, transparent 86%);
+  filter: blur(13px);
+}
+
+/* 林间雾：横贯画面的柔光带，把远树与近树分到两个景深 */
+.env__scene[data-scene="grove"] .env__l--mist {
+  background-image:
+    radial-gradient(ellipse 78% 18% at 50% 58%,
+      rgba(236, 246, 220, .56) 0%, rgba(222, 238, 208, .18) 54%, rgba(0, 0, 0, 0) 80%),
+    linear-gradient(180deg,
+      rgba(222, 238, 210, 0) 34%,
+      rgba(224, 240, 212, .3) 56%,
+      rgba(216, 234, 206, .1) 74%,
+      rgba(0, 0, 0, 0) 90%);
+  filter: blur(6px);
+}
+
+/* 斜射光柱 */
+.env__scene[data-scene="grove"] .env__l--beams {
+  background-image:
+    linear-gradient(102deg, transparent 30%, rgba(255, 250, 214, .17) 35%, rgba(255, 250, 214, .05) 42%, transparent 47%),
+    linear-gradient(96deg, transparent 55%, rgba(255, 248, 206, .15) 60%, rgba(255, 248, 206, .04) 66%, transparent 71%),
+    linear-gradient(108deg, transparent 12%, rgba(255, 252, 224, .13) 17%, transparent 24%);
+  filter: blur(7px);
+  mix-blend-mode: screen;
+}
+
+/* 近树：更大更实更暗。
+   mask-position: 0 100% 让遮罩底边对齐层底 —— 于是我们看到的是
+   树干的下半段（连根部外扩），正是「低飞时从树干之间穿过」的视角。 */
+.env__scene[data-scene="grove"] .env__l--trunks-near {
+  background-color: #1a3319;
+  background-image: none;
+  -webkit-mask-image: var(--mask-trunks-near);
+  mask-image: var(--mask-trunks-near);
+  -webkit-mask-repeat: repeat-x;
+  mask-repeat: repeat-x;
+  -webkit-mask-position: 0 100%;
+  mask-position: 0 100%;
+  -webkit-mask-size: auto 340%;
+  mask-size: auto 340%;
+  filter: blur(2.4px);
+}
+
+/* 顶部树冠：把画面上缘压成一条厚暗带，下缘用若干浅椭圆打碎成毛边，
+   才有「在树冠底下穿行」的包裹感。
+   注意：不要再往画面中部放枝叶 —— 在 6px 模糊下它们只会变成悬浮的暗斑。 */
+.env__scene[data-scene="grove"] .env__l--canopy {
+  background-image:
+    linear-gradient(180deg, rgba(6, 20, 12, .94) 0%, rgba(6, 20, 12, .72) 9%, rgba(6, 20, 12, .3) 20%, rgba(6, 20, 12, 0) 34%),
+    radial-gradient(ellipse 30% 13% at 12% -6%, #0c2415 0%, transparent 72%),
+    radial-gradient(ellipse 26% 11% at 44% -8%, #081e10 0%, transparent 74%),
+    radial-gradient(ellipse 24% 10% at 76% -5%, #0e2a18 0%, transparent 76%),
+    radial-gradient(ellipse 15% 5.5% at 28% 9%, rgba(8, 26, 14, .82) 0%, transparent 84%),
+    radial-gradient(ellipse 13% 5% at 63% 6%, rgba(7, 24, 13, .78) 0%, transparent 86%),
+    radial-gradient(ellipse 11% 4.5% at 90% 13%, rgba(8, 26, 14, .7) 0%, transparent 86%);
+  filter: blur(6px);
+}
+
+/* 林下暗部 + 地平线：底部要有一条「地」，否则整屏都是竖条 */
+.env__scene[data-scene="grove"] .env__l--veil {
+  background-image:
+    linear-gradient(180deg,
+      rgba(6, 18, 11, 0) 0%,
+      rgba(6, 18, 11, 0) 77%,
+      rgba(9, 24, 15, .3) 82%,
+      rgba(7, 19, 12, .6) 89%,
+      rgba(5, 14, 9, .8) 100%),
+    radial-gradient(ellipse 86% 26% at 50% 116%,
+      rgba(5, 14, 9, .74) 0%, rgba(5, 14, 9, .3) 54%, rgba(0, 0, 0, 0) 78%),
+    linear-gradient(180deg,
+      rgba(6, 18, 11, 0) 40%, rgba(5, 16, 10, .3) 68%, rgba(4, 12, 8, .46) 100%);
+}
+
+/* ============================================================
+   场景 5 · 城市夜航
+   ============================================================ */
+.env__scene[data-scene="city"] .env__l--base {
+  background-image: linear-gradient(180deg,
+    #0a1030 0%, #1b2354 20%, #3b3a74 42%, #6d4c7c 60%, #a4657c 74%, #db8c6c 88%, #f2ab7c 100%);
+}
+.env__scene[data-scene="city"] .env__l--glow {
+  background-image:
+    radial-gradient(ellipse 78% 24% at 52% 86%, rgba(255, 176, 110, .4) 0%, rgba(255, 150, 90, .13) 48%, transparent 78%),
+    radial-gradient(circle at 22% 62%, rgba(255, 214, 160, .12) 0%, transparent 42%),
+    radial-gradient(circle at 78% 58%, rgba(160, 200, 255, .1) 0%, transparent 40%);
+}
+.env__scene[data-scene="city"] .env__l--skyline-far {
+  height: 30vh;
+  bottom: 12vh;
+  background-color: #5b6499;
+  opacity: .85;
+  background-image: var(--win-b), var(--win-b);
+  background-size: 46px 40px, 66px 58px;
+  background-repeat: repeat, repeat;
+  background-position: 0 0, 21px 17px;
+}
+.env__scene[data-scene="city"] .env__l--skyline-far {
+  background-image:
+    radial-gradient(rgba(255, 214, 164, .42) 1.05px, transparent 1.4px),
+    radial-gradient(rgba(255, 236, 200, .22) 0.8px, transparent 1.1px);
+  background-size: 21px 19px, 13px 27px;
+  background-repeat: repeat;
+  background-position: 0 0, 7px 9px;
+}
+.env__scene[data-scene="city"] .env__l--skyline-mid {
+  height: 42vh;
+  bottom: 6vh;
+  background-color: #2b3768;
+  background-image: var(--win-b), var(--win-a);
+  background-size: 68px 60px, 74px 66px;
+  background-repeat: repeat, repeat;
+  background-position: 0 0, 33px 25px;
+}
+.env__scene[data-scene="city"] .env__l--skyline-near {
+  height: 56vh;
+  bottom: 0;
+  background-color: #10173a;
+  background-image: var(--win-a), var(--win-b);
+  background-size: 92px 82px, 118px 104px;
+  background-repeat: repeat, repeat;
+  background-position: 0 0, 46px 39px;
+}
+
+/* ============================================================
+   场景 6 · 金色展厅
+   ------------------------------------------------------------
+   上一版的问题：画面里只有「一列列均匀竖条（柱列）+ 三道细拱线」，
+   没有任何横向结构，也没有地面 —— 于是整屏读起来像条形码加一道彩虹。
+
+   这一版按「建筑剖面」重排，自上而下五段：
+     ① 天花（压暗）
+     ② 额枋（横向承重亮带，压在柱列顶上 —— 建筑感主要来自它）
+     ③ 金墙 + 中央拱形壁龛 + 墙面石材分格缝
+     ④ 柱列（只保留两侧各两根，中间让出一整个开间给壁龛）
+     ⑤ 地面 + 交界高光 + 壁龛倒影
+
+   ⚠ 两个必须记住的坑：
+   (1) background-image 列表里 **第一个在最上层**（与「先写先画」的直觉相反）。
+       拱的层次必须按 上→下 写成：龛内光 → 暗芯 → 亮边 → 额枋。
+       曾经按 额枋→亮边→暗芯 写，亮边把暗芯盖住，拱内糊成一片灰
+       （实测亮度 180，正确值应在 60 上下）。
+   (2) .env__scene 上下各外扩了 14vh 给视差留余量，
+       层里所有 top/bottom 都要用 var(--env-over) 补回来，
+       否则整幅画会整体下沉 14vh，地面直接被推到屏幕外。
+   ============================================================ */
+
+/* 五层统一对齐视口 */
+.env__scene[data-scene="hall"] .env__l--base,
+.env__scene[data-scene="hall"] .env__l--wall,
+.env__scene[data-scene="hall"] .env__l--cols,
+.env__scene[data-scene="hall"] .env__l--beams,
+.env__scene[data-scene="hall"] .env__l--floor {
+  top: var(--env-over);
+  bottom: var(--env-over);
+  left: 0;
+  right: 0;
+}
+
+/* ① 金墙底色：天花压暗 / 墙脚线 / 中央暖光 / 墙面金 */
+.env__scene[data-scene="hall"] .env__l--base {
+  background-image:
+    linear-gradient(180deg,
+      rgba(24, 15, 5, .95) 0%,
+      rgba(42, 27, 10, .8) 6%,
+      rgba(70, 48, 18, .42) 12%,
+      rgba(106, 76, 32, .13) 17%,
+      rgba(0, 0, 0, 0) 23%),
+    linear-gradient(180deg,
+      rgba(0, 0, 0, 0) 78.2%,
+      rgba(52, 35, 13, .46) 79.6%,
+      rgba(30, 19, 7, .72) 88%,
+      rgba(12, 8, 3, .92) 100%),
+    radial-gradient(ellipse 34% 32% at 50% 40%,
+      rgba(255, 250, 232, .3) 0%,
+      rgba(255, 242, 206, .1) 50%,
+      rgba(0, 0, 0, 0) 76%),
+    linear-gradient(180deg,
+      #3a260e 0%, #65471c 8%, #95733a 20%, #c39c5c 34%,
+      #dfc38d 48%, #d8b678 60%, #b58a45 74%, #7a5828 86%, #31210d 100%);
+}
+
+/* ② 额枋 + 拱形壁龛 + 墙面分格缝（列表顺序 = 上 → 下） */
+.env__scene[data-scene="hall"] .env__l--wall {
+  top: calc(var(--env-over) + 15vh);
+  bottom: calc(var(--env-over) + 20vh);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-image:
+    /* 龛内透出的光 */
+    radial-gradient(ellipse 8.4% 34% at 50% 100%,
+      rgba(255, 254, 250, .5) 0%, rgba(255, 246, 222, .12) 54%, rgba(0, 0, 0, 0) 80%),
+    /* 壁龛暗芯 */
+    radial-gradient(ellipse 15% 54% at 50% 100%,
+      rgba(42, 27, 10, .93) 0 99.4%, rgba(0, 0, 0, 0) 99.4%),
+    /* 壁龛外圈亮边 */
+    radial-gradient(ellipse 16.4% 58% at 50% 100%,
+      rgba(255, 250, 232, .6) 0 99.2%, rgba(0, 0, 0, 0) 99.2%),
+    /* 额枋 */
+    linear-gradient(180deg,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(255, 253, 246, .3) 1.6%,
+      rgba(255, 250, 234, .5) 4.4%,
+      rgba(206, 166, 100, .44) 7%,
+      rgba(62, 42, 16, .54) 8.8%,
+      rgba(38, 25, 10, .66) 11.2%,
+      rgba(0, 0, 0, 0) 15.2%),
+    /* 墙面石材分格缝：竖向 + 横向，给大片空墙一点肌理 */
+    repeating-linear-gradient(90deg,
+      rgba(112, 82, 38, .26) 0 1.5px, rgba(0, 0, 0, 0) 1.5px 7.4%),
+    repeating-linear-gradient(180deg,
+      rgba(112, 82, 38, .22) 0 1.5px, rgba(0, 0, 0, 0) 1.5px 23%);
+}
+
+/* ④ 柱列：左受光边 → 受光面 → 柱身暗部 → 右侧反射光（圆柱感） */
+.env__scene[data-scene="hall"] .env__l--cols {
+  top: calc(var(--env-over) + 20vh);
+  bottom: calc(var(--env-over) + 19vh);
+  background-image: linear-gradient(90deg,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 22%,
+    rgba(255, 252, 242, .55) 22% 25%,
+    rgba(186, 142, 74, .9) 25% 38%,
+    rgba(50, 32, 12, .96) 38% 60%,
+    rgba(128, 94, 44, .9) 60% 72%,
+    rgba(58, 39, 16, .9) 72% 78%,
+    rgba(0, 0, 0, 0) 78% 100%);
+  background-size: 16.6667% 100%;
+  background-position: 0 0;
+  background-repeat: repeat-x;
+  /* 中间整个开间挖空，让壁龛完整露出来 */
+  -webkit-mask-image: linear-gradient(90deg,
+    #000 0 33%, rgba(0, 0, 0, 0) 37% 63%, #000 67% 100%);
+  mask-image: linear-gradient(90deg,
+    #000 0 33%, rgba(0, 0, 0, 0) 37% 63%, #000 67% 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+/* ⑤ 地面：交界高光 + 壁龛倒影 + 远处亮近处暗 */
+.env__scene[data-scene="hall"] .env__l--floor {
+  top: calc(var(--env-over) + 78vh);
+  bottom: var(--env-over);
+  background-image:
+    linear-gradient(180deg,
+      rgba(255, 251, 242, .4) 0%,
+      rgba(255, 246, 226, .12) 5%,
+      rgba(0, 0, 0, 0) 15%),
+    radial-gradient(ellipse 14% 116% at 50% 0%,
+      rgba(255, 250, 236, .44) 0%, rgba(255, 242, 212, .12) 54%, rgba(0, 0, 0, 0) 84%),
+    linear-gradient(180deg,
+      rgba(150, 112, 56, .42) 0%, rgba(96, 68, 30, .52) 30%, rgba(30, 20, 8, .9) 100%);
+}
+
+/* 顶部打下来的聚光灯锥（曾经太亮，把整幅画糊白了，这里减到四成） */
+.env__scene[data-scene="hall"] .env__l--beams {
+  background-image:
+    conic-gradient(from 154deg at 22% -12%, transparent 0deg, rgba(255, 252, 238, .24) 3.6deg, rgba(255, 252, 238, .05) 9deg, transparent 13deg),
+    conic-gradient(from 190deg at 78% -12%, transparent 0deg, rgba(255, 252, 238, .2) 3.4deg, rgba(255, 252, 238, .04) 8.6deg, transparent 12.4deg),
+    conic-gradient(from 172deg at 50% -16%, transparent 0deg, rgba(255, 254, 246, .16) 2.8deg, transparent 7.6deg);
+  filter: blur(9px);
+}
+
+/* ============================================================
+   场景 7 · 落定星空
+   ============================================================ */
+.env__scene[data-scene="space"] .env__l--base {
+  background-image: linear-gradient(180deg,
+    #04060e 0%, #090f22 30%, #111836 58%, #1d1a3c 80%, #2b2040 100%);
+}
+.env__scene[data-scene="space"] .env__l--nebula {
+  background-image:
+    radial-gradient(ellipse 46% 30% at 24% 34%, rgba(96, 74, 186, .38) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 26% at 76% 62%, rgba(40, 96, 176, .3) 0%, transparent 72%),
+    radial-gradient(ellipse 34% 22% at 56% 88%, rgba(176, 96, 148, .22) 0%, transparent 74%);
+  filter: blur(26px);
+}
+/* 星点：三组互质周期的点阵叠在一起，就不像规则网格了 */
+.env__scene[data-scene="space"] .env__l--stars-far {
+  background-image:
+    radial-gradient(rgba(255, 255, 255, .62) .9px, transparent 1.3px),
+    radial-gradient(rgba(206, 226, 255, .44) .7px, transparent 1px),
+    radial-gradient(rgba(255, 238, 214, .34) .75px, transparent 1.05px);
+  background-size: 137px 121px, 83px 149px, 187px 97px;
+  background-repeat: repeat, repeat, repeat;
+  background-position: 17px 29px, 51px 74px, 96px 8px;
+  opacity: .85;
+}
+.env__scene[data-scene="space"] .env__l--stars-near {
+  background-image:
+    radial-gradient(circle at 17% 22%, rgba(255, 255, 255, .96) 0 1.7px, rgba(206, 224, 255, .5) 1.7px 4.4px, transparent 8px),
+    radial-gradient(circle at 71% 62%, rgba(255, 248, 232, .92) 0 1.9px, rgba(255, 222, 182, .44) 1.9px 5.4px, transparent 10px),
+    radial-gradient(circle at 43% 12%, rgba(216, 234, 255, .88) 0 1.5px, rgba(192, 212, 255, .42) 1.5px 3.8px, transparent 7px),
+    radial-gradient(circle at 88% 34%, rgba(255, 255, 255, .84) 0 1.3px, rgba(210, 226, 255, .36) 1.3px 3.2px, transparent 6px),
+    radial-gradient(rgba(255, 255, 255, .95) 1.4px, transparent 1.8px),
+    radial-gradient(rgba(198, 220, 255, .72) 1px, transparent 1.4px),
+    radial-gradient(rgba(255, 240, 216, .8) 1.2px, transparent 1.55px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%,
+                   211px 173px, 89px 97px, 307px 131px;
+  background-repeat: no-repeat, no-repeat, no-repeat, no-repeat,
+                     repeat, repeat, repeat;
+  background-position: 0 0, 0 0, 0 0, 0 0, 43px 61px, 71px 13px, 158px 97px;
+}
+.env__scene[data-scene="space"] .env__l--glow {
+  background-image: radial-gradient(ellipse 72% 22% at 50% 100%,
+    rgba(126, 150, 226, .3) 0%, rgba(110, 130, 210, .1) 42%, transparent 76%);
+}
+
+/* ============================================================
+   内容层适配
+   —— 环境变亮后，原文案的「白玻璃卡片」会失去对比，
+      这里统一换成深色玻璃，并把各板块的不透明底色换成可穿透的压暗层
+   ============================================================ */
+html.has-env {
+  --surface: rgba(8, 11, 18, .6);
+  --surface-hover: rgba(8, 11, 18, .76);
+}
+
+/* 首屏：环境层已经是天空，原来的渐变海报与视频一起退居二线 */
+html.has-env .hero__media .hero__fallback { opacity: 0; }
+html.has-env .hero__scrim {
+  /* 环境自己就是天空：只在上缘给导航留一条暗色，别把云洗灰 */
+  background:
+    linear-gradient(180deg, rgba(4, 6, 10, .46) 0%, rgba(4, 6, 10, .06) 17%,
+                    rgba(4, 6, 10, .03) 58%, rgba(4, 6, 10, .24) 100%),
+    radial-gradient(ellipse 66% 48% at 50% 50%, rgba(4, 6, 10, .14) 0%,
+                    rgba(4, 6, 10, .04) 64%, transparent 84%);
+}
+
+/* 各板块：保留原有强调色光晕，把不透明底色换成上淡下浓的压暗层 */
+/* 上半部留亮，让环境看得清；越往下内容越密，压暗越重 */
+html.has-env .about {
+  background-image:
+    radial-gradient(ellipse 60% 42% at 14% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 52% 44% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(4, 6, 10, .13) 0%, rgba(4, 6, 10, .34) 32%,
+                    rgba(4, 6, 10, .56) 72%, rgba(4, 6, 10, .72) 100%);
+  background-color: transparent;
+}
+html.has-env .work {
+  background-image:
+    radial-gradient(ellipse 60% 42% at 14% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 52% 44% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(4, 6, 10, .13) 0%, rgba(4, 6, 10, .34) 32%,
+                    rgba(4, 6, 10, .56) 72%, rgba(4, 6, 10, .72) 100%);
+  background-color: transparent;
+}
+html.has-env .exp {
+  background-image:
+    radial-gradient(ellipse 60% 42% at 14% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 52% 44% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(4, 6, 10, .13) 0%, rgba(4, 6, 10, .34) 32%,
+                    rgba(4, 6, 10, .56) 72%, rgba(4, 6, 10, .72) 100%);
+  background-color: transparent;
+}
+html.has-env .proj {
+  background-image:
+    radial-gradient(ellipse 60% 42% at 14% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 52% 44% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 62%),
+    linear-gradient(180deg, rgba(4, 6, 10, .13) 0%, rgba(4, 6, 10, .34) 32%,
+                    rgba(4, 6, 10, .56) 72%, rgba(4, 6, 10, .72) 100%);
+  background-color: transparent;
+}
+/* 展厅那屏环境最亮，压暗重一些，证书才立得住 */
+html.has-env .honor {
+  background-image:
+    radial-gradient(ellipse 58% 40% at 88% 0%, rgba(255, 161, 77, .07) 0%, transparent 62%),
+    radial-gradient(ellipse 52% 44% at 6% 100%, rgba(67, 217, 255, .05) 0%, transparent 64%),
+    linear-gradient(180deg, rgba(4, 6, 10, .18) 0%, rgba(4, 6, 10, .4) 30%,
+                    rgba(4, 6, 10, .6) 70%, rgba(4, 6, 10, .76) 100%);
+  background-color: transparent;
+}
+html.has-env .contact {
+  background-image:
+    radial-gradient(ellipse 62% 48% at 50% 0%, rgba(255, 90, 60, .1) 0%, transparent 62%),
+    radial-gradient(ellipse 46% 42% at 10% 92%, rgba(67, 217, 255, .055) 0%, transparent 64%),
+    linear-gradient(180deg, rgba(4, 6, 10, .13) 0%, rgba(4, 6, 10, .34) 32%,
+                    rgba(4, 6, 10, .56) 72%, rgba(4, 6, 10, .72) 100%);
+  background-color: transparent;
+}
+html.has-env .work__title,
+html.has-env .exp__title,
+html.has-env .proj__title,
+html.has-env .honor__title,
+html.has-env .contact__title,
+html.has-env .about__name {
+  /* 标题是渐变文字（background-clip:text），只能用 drop-shadow 才吃得到字形 */
+  filter: drop-shadow(0 2px 3px rgba(4, 8, 16, .58)) drop-shadow(0 10px 26px rgba(4, 8, 16, .6));
+}
+html.has-env .work__sub,
+html.has-env .exp__sub,
+html.has-env .honor__sub,
+html.has-env .contact__sub,
+html.has-env .about__sub {
+  text-shadow: 0 1px 14px rgba(4, 6, 10, .82), 0 1px 2px rgba(4, 6, 10, .6);
+}
+/* 直接落在环境上（而非深色卡片上）的文字，统一加一层暗色托底 */
+html.has-env .hero__roles,
+html.has-env .role,
+html.has-env .role__sep,
+html.has-env .hero__title-line--sub > span,
+html.has-env .hero__foot,
+html.has-env .explore,
+html.has-env .about__bio,
+html.has-env .about__foot,
+html.has-env .work-card__name,
+html.has-env .work-card__meta,
+html.has-env .work__foot-hint,
+html.has-env .draw__title,
+html.has-env .draw__sub,
+html.has-env .exp__foot-hint,
+html.has-env .proj-card__name,
+html.has-env .proj-card__meta,
+html.has-env .proj__foot-hint,
+html.has-env .honor-card__name,
+html.has-env .honor-card__meta,
+html.has-env .honor__foot-hint,
+html.has-env .contact__copy,
+html.has-env .contact__top {
+  text-shadow: 0 1px 3px rgba(4, 6, 10, .62), 0 2px 16px rgba(4, 6, 10, .72);
+}
+/* 展厅底色偏亮，证书要有一圈投影才立得起来 */
+html.has-env .honor-card__frame {
+  box-shadow: 0 16px 38px -20px rgba(44, 28, 8, .6), 0 0 0 1px rgba(92, 68, 32, .16);
+}
+
+html.has-env .nav {
+  background-image: linear-gradient(180deg, rgba(5, 8, 14, .68) 0%,
+                    rgba(5, 8, 14, .3) 58%, rgba(5, 8, 14, 0) 100%);
+}
+html.has-env .nav.is-scrolled {
+  background: rgba(6, 9, 15, .78);
+}
+
+/* ============================================================
+   云海起飞这一屏底色最亮：这套文字改用深墨色。
+   白字压在白云上无论加多少投影都是糊的，深墨才干净。
+   但注意：深墨字**不能再配白色柔光**（见下），只留 0 模糊的白色贴边。
+   ============================================================ */
+html.has-env .hero__title-name {
+  /* 墨色：整体上浓下淡，左上另覆一道极轻的提亮 ——
+     墨落在纸上笔画内部本就不会是均匀一块，这一点点浓淡差最像"墨"而不像"黑漆"。 */
+  background-image:
+    linear-gradient(156deg, rgba(158, 184, 214, .2) 0%, rgba(158, 184, 214, 0) 54%),
+    linear-gradient(174deg, #04070d 0%, #0a1322 44%, #15233a 78%, rgba(21, 35, 58, .92) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  /* 墨晕：小半径深色投影，让字像刚落纸、四周微微洇开一圈。
+     半径必须小 —— 这里原先挂的是 0 8px 24px 的「白色」柔光，
+     白色沿字形外扩成一整圈浓雾，看上去就是给标题垫了块直角白板（用户报的"白底"）。
+     浅云上的深墨字对比本来就够，要加只能加**深色、小半径**的墨晕，不能加白色。 */
+  text-shadow: none;
+  /* 同样只留墨边滤镜：这里原先叠了两道深色 drop-shadow，
+     不但是"灰板"的成因（见 .hero__title-name 的注释），
+     深墨字配深投影还会把字糊成一坨。白云上的深墨字对比已经足够。 */
+  filter: url(#inkEdge);
+}
+/* 笔痕跟随这一屏的深墨（基础样式用 currentColor，在云海上会变白、看不见） */
+html.has-env .hero__title-line--sub::before {
+  background-color: #16253f;
+  opacity: .8;
+}
+html.has-env .hero__title-line--sub > span,
+html.has-env .role,
+html.has-env .role__sep,
+html.has-env .explore,
+html.has-env .hero__foot {
+  color: #22334f;
+  /* 同一病因：小字上那层 20px 白晕会把笔画整个吃掉，字反而更虚。
+     只保留 0 模糊的 1px 白色贴边，把字从云里轻轻拎起来，不产生雾块。 */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, .46);
+}
+
+
+/* 强制显形开关：加在 html 上后所有进场元素立即到位（供截图自查与打印使用） */
+html.reveal-all .reveal { opacity: 1 !important; transform: none !important; }
+
+/* ---------- 降低动效：环境保留为静态背景，去掉视差与穿越特效 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .env__l { will-change: auto; }
+  .env__fx { display: none; }
+}
+
+/* ---------- 窄屏：环境保留，但把视差幅度与贴地层高度收一收 ---------- */
+@media (max-width: 760px) {
+  .env__scene[data-scene="forest"] .env__l--floor-far {
+  height: 52vh;
+  bottom: 6.6vh;
+  background-image: linear-gradient(180deg, #c9dcd6 0%, #aecac2 100%);
+  opacity: .92;
+}
+  .env__scene[data-scene="forest"] .env__l--floor-mid {
+  height: 62.5vh;
+  bottom: -8.4vh;
+  background-image: linear-gradient(180deg, #8bb888 0%, #6da06b 100%);
+}
+  .env__scene[data-scene="forest"] .env__l--floor-near {
+  height: 87.5vh;
+  bottom: -41vh;
+  background-image: linear-gradient(180deg, #468550 0%, #37734b 30%, #244d32 62%, #17351f 100%);
+}
+  .env__scene[data-scene="city"] .env__l--skyline-far { height: 26vh; }
+  .env__scene[data-scene="city"] .env__l--skyline-mid { height: 36vh; }
+  .env__scene[data-scene="city"] .env__l--skyline-near { height: 48vh; }
+  .env__scene[data-scene="hall"] .env__l--arches { inset: 12% 6% 0 6%; }
+}
+
+/* ============================================================
+   区块压暗层：改为「视口对齐」（background-attachment: fixed）
+   ------------------------------------------------------------
+   问题：原来每个 section 各自铺一条 上浅下深 的竖向渐变。
+   各 section 高度差很大（contact 694px、exp 2063px），
+   于是两条相邻渐变的接缝处必然是「上一条的 .72 撞上下一条的 .13」，
+   滚动时会出现一条非常明显的横向台阶（环境是平滑过渡的，遮罩却是硬切）。
+
+   做法：把最下面那层竖向压暗层锚定到视口（fixed），
+   径向彩色光晕保持 section 相对（scroll）。
+   这样每一屏看到的都是同一条「上亮下暗」的渐变，
+   相邻区块在屏幕上自然拼接成同一条渐变，台阶彻底消失；
+   同时 2063px 高的 exp 屏内也终于有了正常的明暗层次，
+   而不是整块均匀压暗。
+
+   剖面统一为 .13 → .34(32%) → .56(72%) → .72，
+   与原 .about/.work/.exp/.proj/.contact 一致；
+   .honor 原来略重（.18→.76），这里一并向统一剖面靠拢，
+   差异只有 5% 左右，肉眼不可见，但换来全站零接缝。
+   ============================================================ */
+html.has-env .about,
+html.has-env .work,
+html.has-env .exp,
+html.has-env .proj,
+html.has-env .honor,
+html.has-env .contact {
+  background-image:
+    radial-gradient(ellipse 60% 42% at 14% 0%, rgba(255, 90, 60, .07) 0%, transparent 60%),
+    radial-gradient(ellipse 52% 44% at 90% 100%, rgba(67, 217, 255, .06) 0%, transparent 62%),
+    linear-gradient(180deg,
+      rgba(4, 6, 10, .12) 0%,
+      rgba(4, 6, 10, .16) 16%,
+      rgba(4, 6, 10, .26) 40%,
+      rgba(4, 6, 10, .46) 68%,
+      rgba(4, 6, 10, .64) 88%,
+      rgba(4, 6, 10, .74) 100%);
+  background-attachment: scroll, scroll, fixed;
+}
+
+/* 断网/旧内核不支持 fixed 背景时，退回到原来的 section 相对渐变，
+   至少保证可读性，不会出现「整屏没有压暗」的极端情况。 */
+@supports not (background-attachment: fixed) {
+  html.has-env .honor {
+    background-image:
+      radial-gradient(ellipse 58% 40% at 88% 0%, rgba(255, 161, 77, .07) 0%, transparent 62%),
+      radial-gradient(ellipse 52% 44% at 6% 100%, rgba(67, 217, 255, .05) 0%, transparent 64%),
+      linear-gradient(180deg, rgba(4, 6, 10, .18) 0%, rgba(4, 6, 10, .4) 30%, rgba(4, 6, 10, .6) 70%, rgba(4, 6, 10, .76) 100%);
+  }
+}
+
+/* ============================================================
+   首页蒙层：并入同一条视口渐变
+   ------------------------------------------------------------
+   首页原来自己铺了一条「上 .46 / 中 .03 / 下 .24」的竖向蒙层。
+   这条曲线跟内容区的剖面对不上，于是 home → about 的交界处
+   会出现约 15% 亮度的横向硬边（实测跳变 ~46 灰阶）。
+
+   现在首页的竖向层换成与内容区完全相同的那一条（同样 fixed），
+   接缝在任何滚动位置都自动为 0。
+
+   注意：这里**不能**再给首页单独加「中部提亮」的层。
+   因为那种层只存在于首页自己的盒子里，界线扫到屏幕中间时，
+   首页一侧比内容一侧亮出的那部分就会变成新的台阶。
+   想让首页亮，只能把整条剖面调亮（见上面那条 profile：
+   上段只压 6%~20%，保住云海；下段压到 60%~70%，
+   给内容区留住一块够暗的「地面」）。
+   ============================================================ */
+html.has-env .hero__scrim {
+  background-image:
+    linear-gradient(180deg,
+      rgba(4, 6, 10, .12) 0%,
+      rgba(4, 6, 10, .16) 16%,
+      rgba(4, 6, 10, .26) 40%,
+      rgba(4, 6, 10, .46) 68%,
+      rgba(4, 6, 10, .64) 88%,
+      rgba(4, 6, 10, .74) 100%);
+  background-attachment: fixed;
+}
+
+/* ============================================================
+   压在环境上的文字：分两档加暗色托底
+   ------------------------------------------------------------
+   区块压暗层改成视口对齐、剖面整体调亮之后，环境看得更清楚了，
+   但文字落在亮环境上开始发虚。补投影时要分两档 ——
+   一档通吃是不行的：大字号标题套上「1px 贴边 + 48px 远雾」
+   会沿字形外沿糊出一圈明显的黑边，像描了边一样脏。
+
+   · 大字标题（about/work/exp/proj/honor/contact 的一级标题）
+     只给「紧贴字形的小半径投影」。大字号千万不要用大半径远雾：
+     白字压浅底时，36~48px 的远雾会在字外糊出一团灰云，
+     看起来像描了脏边。收紧到 2px/10px 之后，
+     它只承担「压住字形边缘」的作用，字形本身还是干净的。
+   · 小字（副标题、标题旁的提示、卡片下的小标签、导语）
+     才用三层投影：1px 贴边 + 2px 近雾 + 30px 远雾，
+     在浅底上形成一圈几乎察觉不到的暗晕，小字就立住了。
+   卡片内部的文字不需要（卡片本身就是深色玻璃）。
+   ============================================================ */
+
+html.has-env .about__sub,
+html.has-env .work__sub,
+html.has-env .work__title-hint,
+html.has-env .exp__sub,
+html.has-env .exp__title-hint,
+html.has-env .proj__intro-lead,
+html.has-env .proj__title-hint,
+html.has-env .honor__sub,
+html.has-env .honor__title-hint,
+html.has-env .contact__sub,
+html.has-env .exp-card__headline,
+html.has-env .stat-card__title {
+  text-shadow: 0 1px 2px rgba(4, 6, 10, .62), 0 2px 12px rgba(4, 6, 10, .6), 0 0 30px rgba(4, 6, 10, .4);
+}
+
+/* ============================================================
+   第二屏（个人简介）标题：和首屏一样改用深墨字
+   ------------------------------------------------------------
+   这一屏的环境同样是「亮云 + 亮天空」，白字压上去以后
+   无论加多重的投影都只会糊成一片灰。
+   首屏已经验证过：深墨字 + 白色柔光在白底上反而干净利落。
+   这里把同一套做法沿用到「李成泽」这个名字上。
+   ============================================================ */
+html.has-env .about__name {
+  /* 注意：这个是「渐变文字」（.about__name 用 background:linear-gradient + background-clip:text
+     把白渐变裁成字形），所以写 color 是没用的，必须改 background。
+     这里原先还挂了一层 0 8px 26px rgba(255,255,255,.6) 的白色柔光 ——
+     与首页刊头"白底"是同一个病根：26px 模糊的白色沿字形外扩成一圈雾，
+     压在偏灰的云上就显出一块雾斑。深墨字在白云上对比本来就够，直接去掉。 */
+  background: linear-gradient(120deg, #0e1a2f 0%, #16253f 55%, rgba(22, 37, 63, .86) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: none;
+}

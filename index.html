@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>李成泽 — 个人作品集</title>
+<meta name="description" content="李成泽的个人作品集。内容运营 / 品牌运营 / 广告创意 / AIGC 视觉，7 年影视及短视频创作经验。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     墨边滤镜 · 只给刊头巨型字用
+     —— feTurbulence 造不规则噪声，feDisplacementMap 拿它把字形边缘推歪，
+        放大到 120px 以上会看出边缘"洇开"的毛口，正是墨落在纸上的样子。
+     —— 强度只给 6：刊头现在用的是黑体 900，笔画粗、转角方，
+        位移再大就会把方块字啃得残缺；6 刚好只啃出一层极细的毛口。
+     —— filter 区域要留足余量，否则被推歪的毛边会被裁掉一圈。
+        这个区域同时也是整条 filter 链的边界，所以 CSS 里绝不能再往
+        filter 后面串 drop-shadow —— 超出区域的模糊会被硬裁出一条矩形边，
+        看上去就像给标题垫了张灰板（用户报的"白底/灰板"就是这个）。
+     —— 想更"泼"：scale 调到 10~11、baseFrequency 调到 0.016 0.03。
+     —— 想干净锐边：把 style.css 里 .hero__title-name 的 filter 去掉即可。
+     ============================================================ -->
+<svg class="ink-defs" width="0" height="0" aria-hidden="true" focusable="false">
+  <filter id="inkEdge" x="-14%" y="-20%" width="128%" height="140%" color-interpolation-filters="sRGB">
+    <feTurbulence type="fractalNoise" baseFrequency="0.02 0.037" numOctaves="3" seed="7" result="inkNoise"/>
+    <feDisplacementMap in="SourceGraphic" in2="inkNoise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<!-- ============================================================
+     环境层 · 纸飞机飞行的七个环境
+     —— 固定铺满视口，随滚动交叉淡入 + 分层视差
+     —— 每个 .env__l 上的 data-depth 决定该层视差速度（越大越近）
+     —— 全部用渐变与遮罩实时绘制，不依赖任何图片素材
+     —— 仅在 html.has-env 时显示；脚本未加载时自动退回原深色版
+     ============================================================ -->
+<div class="env" id="env" aria-hidden="true">
+
+  <!-- 1 · 云海起飞 -->
+  <div class="env__scene" data-scene="sky">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--sun" data-depth="0.02"></i>
+    <i class="env__l env__l--far" data-depth="0.06"></i>
+    <i class="env__l env__l--near" data-depth="0.16"></i>
+  </div>
+
+  <!-- 2 · 穿越云层 -->
+  <div class="env__scene" data-scene="cloud">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--far" data-depth="0.05"></i>
+    <i class="env__l env__l--near" data-depth="0.17"></i>
+    <i class="env__l env__l--veil" data-depth="0.02"></i>
+  </div>
+
+  <!-- 3 · 森林上方 -->
+  <div class="env__scene" data-scene="forest">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--glow" data-depth="0.02"></i>
+    <i class="env__l env__l--floor-far" data-depth="0.05"></i>
+    <i class="env__l env__l--floor-mid" data-depth="0.11"></i>
+    <i class="env__l env__l--floor-near" data-depth="0.19"></i>
+  </div>
+
+  <!-- 4 · 林间低飞 -->
+  <div class="env__scene" data-scene="grove">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--trunks-far" data-depth="0.06"></i>
+    <i class="env__l env__l--leaves" data-depth="0.07"></i>
+    <i class="env__l env__l--mist" data-depth="0.03"></i>
+    <i class="env__l env__l--beams" data-depth="0.04"></i>
+    <i class="env__l env__l--trunks-near" data-depth="0.20"></i>
+    <i class="env__l env__l--canopy" data-depth="0.10"></i>
+    <i class="env__l env__l--veil" data-depth="0.02"></i>
+  </div>
+
+  <!-- 5 · 城市夜航 -->
+  <div class="env__scene" data-scene="city">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--glow" data-depth="0.02"></i>
+    <i class="env__l env__l--skyline-far" data-depth="0.05"></i>
+    <i class="env__l env__l--skyline-mid" data-depth="0.11"></i>
+    <i class="env__l env__l--skyline-near" data-depth="0.19"></i>
+  </div>
+
+  <!-- 6 · 金色展厅 -->
+  <div class="env__scene" data-scene="hall">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--wall"></i>
+    <i class="env__l env__l--cols" data-depth="0.05"></i>
+    <i class="env__l env__l--beams" data-depth="0.09"></i>
+    <i class="env__l env__l--floor" data-depth="0.16"></i>
+  </div>
+
+  <!-- 7 · 落定星空 -->
+  <div class="env__scene" data-scene="space">
+    <i class="env__l env__l--base"></i>
+    <i class="env__l env__l--nebula" data-depth="0.04"></i>
+    <i class="env__l env__l--stars-far" data-depth="0.03"></i>
+    <i class="env__l env__l--stars-near" data-depth="0.12"></i>
+    <i class="env__l env__l--glow" data-depth="0.02"></i>
+  </div>
+
+</div>
+
+<!-- 穿越特效画布：跨越屏边界时在环境层之上播一次粒子爆发 -->
+<canvas class="env__fx" id="envFx" aria-hidden="true"></canvas>
+
+<!-- ============================================================
+     顶部固定导航
+     ============================================================ -->
+<header class="nav" id="nav">
+  <div class="nav__inner">
+    <a href="#home" class="nav__logo">
+      <span class="nav__logo-mark">李</span>
+      <span class="nav__logo-text">李成泽</span>
+    </a>
+    <nav class="nav__links" id="navLinks">
+      <a href="#home" class="nav__link">首页</a>
+      <a href="#about" class="nav__link">个人简介</a>
+      <a href="#work" class="nav__link">新媒体作品</a>
+      <a href="#exp" class="nav__link">实习经历</a>
+      <a href="#proj" class="nav__link">项目作品</a>
+      <a href="#honor" class="nav__link">荣誉证书</a>
+      <a href="#contact" class="nav__link">联系我</a>
+    </nav>
+    <button class="nav__burger" id="navBurger" aria-label="打开菜单">
+      <span></span><span></span>
+    </button>
+  </div>
+</header>
+
+<!-- 进度条 -->
+<div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
+
+<!-- ============================================================
+     第一屏 · 首页（全屏视频背景）
+     ============================================================ -->
+<section class="hero" id="home">
+
+  <!-- 背景视频层（视频文件缺失时自动回退到渐变海报） -->
+  <div class="hero__media">
+    <video
+      class="hero__video"
+      id="heroVideo"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="auto"
+      poster="assets/hero-poster.jpg">
+      <source src="assets/hero.mp4" type="video/mp4">
+      <source src="assets/hero.webm" type="video/webm">
+    </video>
+    <!-- 海报渐变：视频不可用时显示 -->
+    <div class="hero__fallback" aria-hidden="true">
+      <span class="hero__fallback-blob hero__fallback-blob--1"></span>
+      <span class="hero__fallback-blob hero__fallback-blob--2"></span>
+      <span class="hero__fallback-blob hero__fallback-blob--3"></span>
+      <span class="hero__fallback-grain"></span>
+    </div>
+    <div class="hero__scrim" aria-hidden="true"></div>
+  </div>
+
+  <!-- 左上角身份标签 -->
+  <div class="hero__roles" id="heroRoles">
+    <span class="role">内容运营</span>
+    <span class="role__sep">/</span>
+    <span class="role">品牌运营</span>
+    <span class="role__sep">/</span>
+    <span class="role">广告创意</span>
+    <span class="role__sep">/</span>
+    <span class="role">AIGC 视觉</span>
+  </div>
+
+  <!-- 中央主标题 -->
+  <div class="hero__center">
+    <h1 class="hero__title">
+      <span class="hero__title-line">
+        <span class="hero__title-name">李成泽</span>
+      </span>
+      <span class="hero__title-line hero__title-line--sub">
+        <span>个人作品集</span>
+      </span>
+    </h1>
+
+    <a href="#about" class="explore" id="exploreBtn">
+      <span class="explore__ring" aria-hidden="true"></span>
+      <span class="explore__text">点击探索</span>
+      <svg class="explore__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 5v14M6 13l6 6 6-6"/>
+      </svg>
+    </a>
+  </div>
+
+  <!-- 底部滚动提示 -->
+  <div class="hero__foot">
+    <span class="hero__foot-line" aria-hidden="true"></span>
+    <span class="hero__foot-text">向下滚动</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第二屏 · 个人简介
+     ============================================================ -->
+<section class="about" id="about">
+
+  <div class="about__inner">
+
+    <!-- 左：头像 -->
+    <aside class="about__side">
+      <div class="portrait" id="portrait">
+        <!-- 构图微调：--avatar-zoom 放大倍数 / --avatar-y 垂直位置（百分比，越小越靠上） -->
+        <div class="portrait__frame" style="--avatar-zoom: 1; --avatar-y: 12%;">
+          <img class="portrait__img" src="assets/avatar.jpg" alt="李成泽的个人头像"
+               onerror="this.classList.add('is-missing')">
+          <div class="portrait__placeholder" aria-hidden="true">
+            <span>李</span>
+          </div>
+          <div class="portrait__sheen" aria-hidden="true"></div>
+        </div>
+        <div class="portrait__tag">
+          <span class="portrait__tag-dot"></span>
+          7 年内容创作
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右：姓名 + 简介 -->
+    <div class="about__main">
+      <h2 class="about__name">李成泽</h2>
+      <p class="about__sub">5G 冲浪的各媒体平台资深用户，拥有 7 年影视及短视频创作经验。</p>
+      <div class="about__bio">
+        <p>
+          我的内容能力始于影像创作，延伸于用户洞察。从视频策划、拍摄制作，到账号运营、数据分析，
+          我关注的不只是「如何生产内容」，更关注：<em>什么内容能触达用户，并产生真实价值。</em>
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 四个数据板块 -->
+  <div class="stats" id="stats">
+
+    <article class="stat-card reveal" tabindex="0">
+      <div class="stat-card__glow" aria-hidden="true"></div>
+      <div class="stat-card__top">
+        <span class="stat-card__num">2<span>段</span></span>
+        <span class="stat-card__badge">实习经历</span>
+      </div>
+      <h3 class="stat-card__title">实习经历</h3>
+      <ul class="stat-card__list">
+        <li>新东方</li>
+        <li>浙江博澜文化有限公司</li>
+      </ul>
+      <span class="stat-card__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+      </span>
+    </article>
+
+    <article class="stat-card reveal" tabindex="0">
+      <div class="stat-card__glow" aria-hidden="true"></div>
+      <div class="stat-card__top">
+        <span class="stat-card__num">6<span>项</span></span>
+        <span class="stat-card__badge">商业广告制作</span>
+      </div>
+      <h3 class="stat-card__title">商业广告制作</h3>
+      <ul class="stat-card__list">
+        <li>广州农商银行</li>
+        <li>广东财经大学</li>
+        <li>佛山南山湖实验中学</li>
+        <li>等 6 家机构</li>
+      </ul>
+      <span class="stat-card__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+      </span>
+    </article>
+
+    <article class="stat-card reveal" tabindex="0">
+      <div class="stat-card__glow" aria-hidden="true"></div>
+      <div class="stat-card__top">
+        <span class="stat-card__num">2<span>项</span></span>
+        <span class="stat-card__badge">AI 获奖短片</span>
+      </div>
+      <h3 class="stat-card__title">AI 获奖短片</h3>
+      <ul class="stat-card__list">
+        <li>雅客《我的快乐 BGM》</li>
+        <li>银联《省钱锦囊》</li>
+      </ul>
+      <span class="stat-card__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+      </span>
+    </article>
+
+    <article class="stat-card reveal" tabindex="0">
+      <div class="stat-card__glow" aria-hidden="true"></div>
+      <div class="stat-card__top">
+        <span class="stat-card__num stat-card__num--text">AI</span>
+        <span class="stat-card__badge">AI 应用</span>
+      </div>
+      <h3 class="stat-card__title">AI 应用</h3>
+      <ul class="stat-card__list">
+        <li>数据复盘工作流搭建</li>
+        <li>个人网站制作</li>
+      </ul>
+      <span class="stat-card__arrow" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H8M17 7v9"/></svg>
+      </span>
+    </article>
+
+  </div>
+
+  <!-- 第二屏底部提示 -->
+  <div class="about__foot">
+    <span>更多作品整理中</span>
+    <span class="about__foot-dot" aria-hidden="true"></span>
+    <span>敬请期待</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第三屏 · 新媒体作品案例
+     ============================================================ -->
+<section class="work" id="work">
+
+  <!-- 标题 -->
+  <header class="work__head">
+    <h2 class="work__title">
+      新媒体作品案例
+      <span class="work__title-hint">（可点击查看）</span>
+    </h2>
+    <p class="work__sub">12 个案例 · 涵盖品牌宣传、广告创意、AI 短片与短视频</p>
+  </header>
+
+  <!-- 两排滚动案例带 -->
+
+  <div class="marquee" id="marquee">
+
+    <!-- 第一排：向左移动 -->
+    <div class="marquee__row">
+      <div class="marquee__viewport">
+        <div class="marquee__track" data-direction="left">
+
+          <button class="work-card" type="button"
+                  data-title="雅客《我的快乐 BGM》"
+                  data-category="AI 短片"
+                  data-video="assets/videos/work-01.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--3" aria-hidden="true">
+                <span class="cover-art cover-art--wave"><i></i><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">00:48</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">雅客《我的快乐 BGM》</span>
+              <span class="work-card__meta">雅客 · AI 获奖短片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="银联《省钱锦囊》"
+                  data-category="AI 短片"
+                  data-video="assets/videos/work-02.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--1" aria-hidden="true">
+                <span class="cover-art cover-art--spark"><i></i><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">02:08</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">银联《省钱锦囊》</span>
+              <span class="work-card__meta">银联 · AI 获奖短片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="广州农商银行宣传片"
+                  data-category="品牌宣传"
+                  data-video="assets/videos/work-03.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--4" aria-hidden="true">
+                <span class="cover-art cover-art--bank"><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">02:34</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">广州农商银行宣传片</span>
+              <span class="work-card__meta">广州农商银行 · 品牌片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="《窝囊 i 人的打工日记》"
+                  data-category="获奖作品"
+                  data-video="assets/videos/work-04.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--15" aria-hidden="true">
+                <span class="cover-art cover-art--tag"><i>打工</i><i>日记</i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">02:11</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">《窝囊 i 人的打工日记》</span>
+              <span class="work-card__meta">大广赛 · 获奖作品</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="《湾区武术文化表征》"
+                  data-category="品牌宣传"
+                  data-video="assets/videos/work-05.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--16" aria-hidden="true">
+                <span class="cover-art cover-art--pulse"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">08:14</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">《湾区武术文化表征》</span>
+              <span class="work-card__meta">学习强国 · 节目制作</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="广东财经大学研究生宣传片"
+                  data-category="品牌宣传"
+                  data-video="assets/videos/work-06.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--6" aria-hidden="true">
+                <span class="cover-art cover-art--book"><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">03:09</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">广东财经大学研究生宣传片</span>
+              <span class="work-card__meta">广东财经大学 · 宣传片</span>
+            </span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 第二排：向右移动 -->
+    <div class="marquee__row">
+      <div class="marquee__viewport">
+        <div class="marquee__track" data-direction="right">
+
+          <button class="work-card" type="button"
+                  data-title="华电能源宣传片"
+                  data-category="品牌宣传"
+                  data-video="assets/videos/work-07.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--5" aria-hidden="true">
+                <span class="cover-art cover-art--city"><i></i><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">07:08</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">华电能源宣传片</span>
+              <span class="work-card__meta">华电能源 · 宣传片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="佛山南山湖实验中学宣传片"
+                  data-category="品牌宣传"
+                  data-video="assets/videos/work-08.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--7" aria-hidden="true">
+                <span class="cover-art cover-art--gate"><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">03:49</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">佛山南山湖实验中学宣传片</span>
+              <span class="work-card__meta">佛山南山湖实验中学 · 宣传片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="《忧郁蓝海》"
+                  data-category="广告创意"
+                  data-video="assets/videos/work-09.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--14" aria-hidden="true">
+                <span class="cover-art cover-art--ripple"><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">00:25</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">《忧郁蓝海》</span>
+              <span class="work-card__meta">酒类广告 · 品牌短片</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="口红《雾里》"
+                  data-category="广告创意"
+                  data-video="assets/videos/work-10.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--11" aria-hidden="true">
+                <span class="cover-art cover-art--ripple"><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">00:27</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">口红《雾里》</span>
+              <span class="work-card__meta">唇间三色 · 雾面膏</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="口红《正红》"
+                  data-category="广告创意"
+                  data-video="assets/videos/work-11.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--9" aria-hidden="true">
+                <span class="cover-art cover-art--ripple"><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">00:19</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">口红《正红》</span>
+              <span class="work-card__meta">唇间三色 · 经典红</span>
+            </span>
+          </button>
+
+          <button class="work-card" type="button"
+                  data-title="网感剪辑"
+                  data-category="短视频"
+                  data-video="assets/videos/work-12.mp4">
+            <span class="work-card__media">
+              <span class="work-card__cover work-card__cover--12" aria-hidden="true">
+                <span class="cover-art cover-art--film"><i></i><i></i><i></i></span>
+              </span>
+              <span class="work-card__play" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              </span>
+              <span class="work-card__dur">01:14</span>
+            </span>
+            <span class="work-card__caption">
+              <span class="work-card__name">网感剪辑</span>
+              <span class="work-card__meta">短视频 · 剪辑</span>
+            </span>
+          </button>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="work__foot">
+    <span class="work__foot-hint">悬停暂停 · 点击卡片播放</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第四屏 · 实习经历
+     ============================================================ -->
+<section class="exp" id="exp">
+
+  <header class="exp__head">
+    <h2 class="exp__title">
+      实习经历
+      <span class="exp__title-hint">（2 段 · 品牌与内容运营）</span>
+    </h2>
+    <p class="exp__sub">从内容规划、账号运营到全流程传播策划，完整参与品牌内容从 0 到 1 的落地。</p>
+  </header>
+
+  <div class="exp__timeline" id="expTimeline">
+
+    <article class="exp-item exp-item--3col reveal">
+      <div class="exp-item__rail">
+        <span class="exp-item__dot" aria-hidden="true"></span>
+        <time class="exp-item__period">2026.03 — 2026.07</time>
+      </div>
+
+      <div class="exp-card exp-card--compact">
+
+        <header class="exp-card__head">
+          <div class="exp-card__headline">
+            <h3 class="exp-card__company">新东方国际教育（广州）</h3>
+            <p class="exp-card__role">品牌 / 内容运营</p>
+          </div>
+          <div class="exp-card__tags">
+            <span class="exp-tag">品牌声量</span>
+            <span class="exp-tag">矩阵账号</span>
+            <span class="exp-tag">留学项目</span>
+          </div>
+        </header>
+
+        <ul class="exp-metrics exp-metrics--2col">
+            <li class="exp-metric">
+            <span class="exp-metric__num">60<span>+</span></span>
+            <span class="exp-metric__label">信息流视频</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">200<span>w+</span></span>
+            <span class="exp-metric__label">累计浏览</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">205<span>%</span></span>
+            <span class="exp-metric__label">留存提升</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">25<span>%</span></span>
+            <span class="exp-metric__label">线索提高</span>
+          </li>
+        </ul>
+
+        <div class="exp-duties">
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">01</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">内容规划</h4>
+              <p class="exp-duty__text">留学项目内容策划与落地，按产品种类、卖点与痛点规划视频排期。</p>
+            </div>
+          </div>
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">02</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">账号运营</h4>
+              <p class="exp-duty__text">运营视频号 / 小红书 / 抖音矩阵账号，拆分平台玩法与竞品，数据驱动内容优化。</p>
+            </div>
+          </div>
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">03</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">社群与传播策划</h4>
+              <p class="exp-duty__text">探校活动 <em>5 场</em>、服务 <em>400+</em> 人次，留学证件照 <em>80+ 组</em>，参与高管年会（安徽、合肥、深圳、杭州）。</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <section class="draw draw--side" aria-label="新东方国际教育 内容作品">
+        <div class="draw__screen draw__screen--tall">
+          <video class="draw__video draw__video--bg" id="drawVideoABg" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+          <video class="draw__video" id="drawVideoA" controls playsinline preload="none"></video>
+          <div class="draw__empty" id="drawEmptyA">
+            <span class="draw__empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 10l4.55-2.27A1 1 0 0121 8.6v6.8a1 1 0 01-1.45.87L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/>
+              </svg>
+            </span>
+            <span class="draw__empty-title">点击下方卡片播放</span>
+          </div>
+          <div class="draw__screen-bar">
+            <span class="draw__screen-name" id="drawNameA">未选择</span>
+            <span class="draw__screen-count" id="drawCountA">0 / 4</span>
+          </div>
+        </div>
+        <div class="draw__rail draw__rail--stack">
+          <button class="draw-card" type="button"
+                  data-target="A" data-name="留学干货口播"
+                  data-video="assets/videos/exp-01.mp4">
+            <span class="draw-card__no">01</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">留学干货口播</span>
+              <span class="draw-card__meta">视频号 · 学科干货</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="A" data-name="课程对谈短视频"
+                  data-video="assets/videos/exp-02.mp4">
+            <span class="draw-card__no">02</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">课程对谈短视频</span>
+              <span class="draw-card__meta">视频号 · 双人对谈</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="A" data-name="户外街采口播"
+                  data-video="assets/videos/exp-03.mp4">
+            <span class="draw-card__no">03</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">户外街采口播</span>
+              <span class="draw-card__meta">抖音 · 街头采访</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="A" data-name="校区开业剪彩"
+                  data-video="assets/videos/exp-04.mp4">
+            <span class="draw-card__no">04</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">校区开业剪彩</span>
+              <span class="draw-card__meta">线下活动 · 记录</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+        </div>
+      </section>
+    </article>
+
+    <article class="exp-item exp-item--3col reveal">
+      <div class="exp-item__rail">
+        <span class="exp-item__dot" aria-hidden="true"></span>
+        <time class="exp-item__period">2024.06 — 2024.09</time>
+      </div>
+
+      <div class="exp-card exp-card--compact">
+
+        <header class="exp-card__head">
+          <div class="exp-card__headline">
+            <h3 class="exp-card__company">浙江博澜文化有限公司（杭州）</h3>
+            <p class="exp-card__role">企业文化内容运营</p>
+          </div>
+          <div class="exp-card__tags">
+            <span class="exp-tag">0 → 1 定位</span>
+            <span class="exp-tag">内容生态</span>
+            <span class="exp-tag">大型会议</span>
+          </div>
+        </header>
+
+        <ul class="exp-metrics exp-metrics--2col">
+            <li class="exp-metric">
+            <span class="exp-metric__num">20<span>+</span></span>
+            <span class="exp-metric__label">视频产出</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">1<span>w+</span></span>
+            <span class="exp-metric__label">官号转发</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">2.8<span>w</span></span>
+            <span class="exp-metric__label">社群覆盖</span>
+        </li>
+          <li class="exp-metric">
+            <span class="exp-metric__num">5<span>场</span></span>
+            <span class="exp-metric__label">大型会议</span>
+          </li>
+        </ul>
+
+        <div class="exp-duties">
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">01</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">内容规划</h4>
+              <p class="exp-duty__text">视频号传播专栏策划与落地，从 <em>0-1</em> 精准定位，从 icon、slogan、IP 构建儿童成长内容生态。</p>
+            </div>
+          </div>
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">02</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">内容运营</h4>
+              <p class="exp-duty__text">搭建儿童友好生态，完善账号定位与内容矩阵，产出视频 <em>20 条+</em>，官号转发 <em>1w+</em>，社群覆盖 <em>2.8w 人</em>。</p>
+            </div>
+          </div>
+
+          <div class="exp-duty">
+            <span class="exp-duty__idx" aria-hidden="true">03</span>
+            <div class="exp-duty__body">
+              <h4 class="exp-duty__title">其他内容</h4>
+              <p class="exp-duty__text">协同策划 6.1 儿童庆典、跨国交流会等 <em>5 场</em>大型会议；独立制作会议开场视频，获部门及核心 KP 高度评价。</p>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <section class="draw draw--side" aria-label="浙江博澜文化 内容作品">
+        <div class="draw__screen draw__screen--tall">
+          <video class="draw__video draw__video--bg" id="drawVideoBBg" muted playsinline preload="none" aria-hidden="true" tabindex="-1"></video>
+          <video class="draw__video" id="drawVideoB" controls playsinline preload="none"></video>
+          <div class="draw__empty" id="drawEmptyB">
+            <span class="draw__empty-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M15 10l4.55-2.27A1 1 0 0121 8.6v6.8a1 1 0 01-1.45.87L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/>
+              </svg>
+            </span>
+            <span class="draw__empty-title">点击下方卡片播放</span>
+          </div>
+          <div class="draw__screen-bar">
+            <span class="draw__screen-name" id="drawNameB">未选择</span>
+            <span class="draw__screen-count" id="drawCountB">0 / 4</span>
+          </div>
+        </div>
+        <div class="draw__rail draw__rail--stack">
+          <button class="draw-card" type="button"
+                  data-target="B" data-name="幼教专家访谈"
+                  data-video="assets/videos/exp-05.mp4">
+            <span class="draw-card__no">01</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">幼教专家访谈</span>
+              <span class="draw-card__meta">内容矩阵 · 知识向</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="B" data-name="环境创设访谈"
+                  data-video="assets/videos/exp-06.mp4">
+            <span class="draw-card__no">02</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">环境创设访谈</span>
+              <span class="draw-card__meta">内容矩阵 · 专家讲坛</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="B" data-name="儿童生活实践"
+                  data-video="assets/videos/exp-07.mp4">
+            <span class="draw-card__no">03</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">儿童生活实践</span>
+              <span class="draw-card__meta">儿童友好 · 生态记录</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+
+          <button class="draw-card" type="button"
+                  data-target="B" data-name="户外建构游戏"
+                  data-video="assets/videos/exp-08.mp4">
+            <span class="draw-card__no">04</span>
+            <span class="draw-card__body">
+              <span class="draw-card__name">户外建构游戏</span>
+              <span class="draw-card__meta">儿童友好 · 生态记录</span>
+            </span>
+            <span class="draw-card__play" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </span>
+          </button>
+        </div>
+      </section>
+    </article>
+
+  </div>
+
+  <div class="exp__foot">
+    <span class="exp__foot-hint">以上为全部实习经历 · 更多项目细节欢迎交流</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第五屏 · 项目作品（沁湖电影工作室）
+     ============================================================ -->
+<section class="proj" id="proj">
+
+  <header class="proj__head">
+    <h2 class="proj__title">
+      项目作品
+      <span class="proj__title-hint">（沁湖电影工作室 · 剪辑部负责人）</span>
+    </h2>
+  </header>
+
+  <!-- --- 项目介绍 --- -->
+  <div class="proj__intro reveal">
+    <div class="proj__intro-lead">
+      <span class="proj__eyebrow">沁湖电影工作室</span>
+      <h3 class="proj__role">剪辑部负责人</h3>
+      <p class="proj__desc">
+        主导工作室团队项目；担任导演、策划、剪辑、摄像，参与 <em>6 部</em>快闪、宣传片、微电影、
+        演讲视频等商业项目制作。
+      </p>
+    </div>
+
+    <ul class="proj__results">
+      <li class="proj-result">
+        <span class="proj-result__num">4<span class="proj-result__unit">万+</span></span>
+        <span class="proj-result__label">独立接洽商单金额</span>
+      </li>
+      <li class="proj-result">
+        <span class="proj-result__num">3<span class="proj-result__unit">万+</span></span>
+        <span class="proj-result__label">视频号单平台点赞转发</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="proj__highlight reveal">
+    <span class="proj__highlight-tag">重点项目</span>
+    <p class="proj__highlight-text">
+      <span class="proj__highlight-item">2025 年广东财经大学<em>本科</em>、<em>研究生</em>宣传片<em>主剪辑师</em></span>
+      <span class="proj__highlight-sep" aria-hidden="true">·</span>
+      <span class="proj__highlight-item">广州农商银行<em>企业品牌传播</em></span>
+      <span class="proj__highlight-sep" aria-hidden="true">·</span>
+      <span class="proj__highlight-item">南山湖实验中学<em>校园品牌传播</em></span>
+    </p>
+  </div>
+
+  <!-- --- 作品：底部 6 个，悬停微放大 + 3D 倾斜 --- -->
+  <div class="proj__works" id="projWorks">
+
+    <button class="proj-card reveal" type="button"
+            data-title="广财 40 周年快闪片" data-category="快闪短片"
+            data-video="assets/videos/proj-01.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--1">
+            <span class="cover-art cover-art--film"><i></i><i></i><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">快闪</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">广财 40 周年快闪片</span>
+          <span class="proj-card__meta">快闪 · 05:12</span>
+        </span>
+      </span>
+    </button>
+
+    <button class="proj-card reveal" type="button"
+            data-title="广州农商银行《绿色金融》宣传片" data-category="品牌宣传片"
+            data-video="assets/videos/proj-02.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--2">
+            <span class="cover-art cover-art--wave"><i></i><i></i><i></i><i></i><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">宣传片</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">广州农商银行《绿色金融》</span>
+          <span class="proj-card__meta">品牌宣传片 · 02:34</span>
+        </span>
+      </span>
+    </button>
+
+    <button class="proj-card reveal" type="button"
+            data-title="微电影《游必有方》" data-category="微电影"
+            data-video="assets/videos/proj-03.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--3">
+            <span class="cover-art cover-art--mic"><i></i><i></i><i></i><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">微电影</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">微电影《游必有方》</span>
+          <span class="proj-card__meta">微电影 · 21:42</span>
+        </span>
+      </span>
+    </button>
+
+    <button class="proj-card reveal" type="button"
+            data-title="广东财经大学 · 研究生宣传片" data-category="宣传片"
+            data-video="assets/videos/proj-04.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--4">
+            <span class="cover-art cover-art--gate"><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">宣传片</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">广东财经大学 · 研究生宣传片</span>
+          <span class="proj-card__meta">宣传片 · 03:09</span>
+        </span>
+      </span>
+    </button>
+
+    <button class="proj-card reveal" type="button"
+            data-title="佛山南山湖实验中学宣传片" data-category="宣传片"
+            data-video="assets/videos/proj-05.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--5">
+            <span class="cover-art cover-art--book"><i></i><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">宣传片</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">佛山南山湖实验中学宣传片</span>
+          <span class="proj-card__meta">宣传片 · 03:49</span>
+        </span>
+      </span>
+    </button>
+
+    <button class="proj-card reveal" type="button"
+            data-title="《在城市心脏脉动之间》" data-category="演讲视频"
+            data-video="assets/videos/proj-06.mp4">
+      <span class="proj-card__tilt">
+        <span class="proj-card__media">
+          <span class="proj-card__cover proj-card__cover--6">
+            <span class="cover-art cover-art--city"><i></i><i></i><i></i><i></i></span>
+          </span>
+          <span class="proj-card__play" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+          </span>
+          <span class="proj-card__chip">演讲</span>
+        </span>
+        <span class="proj-card__caption">
+          <span class="proj-card__name">《在城市心脏脉动之间》</span>
+          <span class="proj-card__meta">演讲视频 · 07:08</span>
+        </span>
+      </span>
+    </button>
+
+</div>
+
+  <div class="proj__foot">
+    <span class="proj__foot-hint">悬停卡片看 3D 效果 · 点击播放</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第六屏 · 荣誉证书展示
+     —— 上排 6 张竖版 9:16，下排 4 张横版 4:3
+     ============================================================ -->
+<section class="honor" id="honor">
+
+  <!-- 标题 -->
+  <header class="honor__head">
+    <h2 class="honor__title">
+      荣誉证书展示
+      <span class="honor__title-hint">（可点击放大）</span>
+    </h2>
+    <p class="honor__sub">10 项荣誉 · 上排 6 项竖版证书，下排 4 项横版证书</p>
+  </header>
+
+  <!-- 上排：6 张竖版（按证书 A4 竖版比例 210:297） -->
+  <div class="honor__row honor__row--portrait">
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="清州亚洲国际电影节 · Merit Award"
+            data-category="《燕归何处》· 二等奖 · 2025"
+            data-image="assets/certs/honor-01.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c1" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-01.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">清州亚洲国际电影节</span>
+        <span class="honor-card__meta">Merit Award 二等奖 ·《燕归何处》</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="北京国际电影节 · 优秀创意奖"
+            data-category="华硕 e 创公益影像单元 ·《司晨报晓》"
+            data-image="assets/certs/honor-02.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c2" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-02.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">北京国际电影节 · 优秀创意奖</span>
+        <span class="honor-card__meta">华硕 e 创公益影像单元</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="KO 短片创作赛 Round 5 · 提名奖"
+            data-category="作品《画师》· 河北传媒学院"
+            data-image="assets/certs/honor-03.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c3" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-03.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">KO 短片创作赛 · 提名奖</span>
+        <span class="honor-card__meta">作品《画师》· Round 5</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="第九届长江中下游新闻传播学研究生学术研讨会 · 优秀奖"
+            data-category="论文《期待与共创》· 江西师范大学"
+            data-image="assets/certs/honor-04.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c4" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-04.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">长江中下游学术研讨会</span>
+        <span class="honor-card__meta">优秀奖 · 论文《期待与共创》</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="2023 金鹅青年电影节 · 短片单元入围奖"
+            data-category="作品《司晨报晓》· 河北传媒学院"
+            data-image="assets/certs/honor-05.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c5" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-05.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">金鹅青年电影节 · 入围奖</span>
+        <span class="honor-card__meta">短片单元 ·《司晨报晓》· 2023</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--portrait reveal" type="button"
+            data-title="广东文艺评论专题研讨会 · 优秀论文"
+            data-category="《〈封神〉神话改编电影的历史逻辑与现实驱动》"
+            data-image="assets/certs/honor-06.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c6" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-06.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">广东文艺评论研讨会</span>
+        <span class="honor-card__meta">优秀论文 ·《封神》神话改编研究</span>
+      </span>
+    </button>
+  </div>
+
+  <!-- 下排：4 张横版（A4 横版比例 297:210） -->
+  <div class="honor__row honor__row--landscape">
+
+    <button class="honor-card honor-card--landscape reveal" type="button"
+            data-title="2021 河北青年短视频创新创业大赛"
+            data-category="“小青竹”网红河北 100 强"
+            data-image="assets/certs/honor-07.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c7" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-07.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">河北青年短视频双创大赛</span>
+        <span class="honor-card__meta">“小青竹”网红河北 100 强</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--landscape reveal" type="button"
+            data-title="第 14 届澳门国际微电影节 · 入围证书"
+            data-category="学生组 ·《司晨报晓》"
+            data-image="assets/certs/honor-08.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c8" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-08.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">澳门国际微电影节 · 入围</span>
+        <span class="honor-card__meta">第 14 届 · 学生组 ·《司晨报晓》</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--landscape reveal" type="button"
+            data-title="第四届湾区有影力青年影像艺术展 · 优秀奖"
+            data-category="主竞赛单元剧情组 ·《燕归何处》"
+            data-image="assets/certs/honor-09.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c9" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-09.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">湾区有影力青年影像展</span>
+        <span class="honor-card__meta">主竞赛单元剧情组 · 优秀奖</span>
+      </span>
+    </button>
+
+    <button class="honor-card honor-card--landscape reveal" type="button"
+            data-title="校级“优秀团员”荣誉称号"
+            data-category="共青团河北传媒学院委员会"
+            data-image="assets/certs/honor-10.jpg">
+      <span class="honor-card__tilt">
+        <span class="honor-card__frame">
+          <span class="honor-card__art honor-card__art--c10" aria-hidden="true">
+            <i class="honor-card__medal"></i>
+            <span class="honor-card__art-title">荣誉证书</span>
+            <i class="honor-card__rule"></i>
+            <span class="honor-card__art-sub">Certificate of Honor</span>
+            <i class="honor-card__seal"></i>
+          </span>
+          <img class="honor-card__img" src="assets/certs/honor-10.jpg" alt="" loading="lazy" decoding="async">
+        </span>
+        <span class="honor-card__zoom" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6M11 8.2v5.6M8.2 11h5.6"/></svg>
+        </span>
+      </span>
+      <span class="honor-card__caption">
+        <span class="honor-card__name">校级“优秀团员”</span>
+        <span class="honor-card__meta">共青团河北传媒学院委员会 · 2023</span>
+      </span>
+    </button>
+  </div>
+
+  <div class="honor__foot">
+    <span class="honor__foot-hint">点击证书查看大图 · 共 10 项</span>
+  </div>
+
+</section>
+
+<!-- ============================================================
+     第七屏 · 联系我
+     —— 邮箱 / 手机两张卡片，点击可直接写信 / 拨号，右上角一键复制
+     ============================================================ -->
+<section class="contact" id="contact">
+
+  <!-- 顶部光晕装饰 -->
+  <div class="contact__glow" aria-hidden="true"></div>
+
+  <div class="contact__inner">
+
+    <header class="contact__head reveal">
+      <p class="contact__eyebrow">
+        <i class="contact__eyebrow-dot" aria-hidden="true"></i>
+        Contact · 联系我
+      </p>
+      <h2 class="contact__title">期待与你，<em>一起创作</em></h2>
+      <p class="contact__sub">
+        内容运营 / 品牌运营 / 广告创意 / AIGC 视觉<br>
+        有合作意向，或者只是想聊聊创作，欢迎随时找我。
+      </p>
+    </header>
+
+    <div class="contact__cards reveal">
+
+      <!-- 邮箱 -->
+      <article class="contact-card contact-card--mail">
+        <span class="contact-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="5" width="18" height="14" rx="2.6"/>
+            <path d="M3.6 7.4l7.3 5.1a2 2 0 0 0 2.2 0l7.3-5.1"/>
+          </svg>
+        </span>
+        <div class="contact-card__body">
+          <span class="contact-card__label">邮箱 · Email</span>
+          <a class="contact-card__value" href="mailto:LCZWSSY@163.com">LCZWSSY@163.com</a>
+          <span class="contact-card__hint">点击直接写邮件</span>
+        </div>
+        <button class="contact-card__copy" type="button"
+                data-copy="LCZWSSY@163.com" aria-label="复制邮箱地址">
+          <svg class="contact-card__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="11" rx="2.4"/>
+            <path d="M15.5 9V6.4A2.4 2.4 0 0 0 13.1 4H6.4A2.4 2.4 0 0 0 4 6.4v6.7A2.4 2.4 0 0 0 6.4 15.5H9"/>
+          </svg>
+          <svg class="contact-card__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6.5L9.5 17 4 11.6"/>
+          </svg>
+        </button>
+      </article>
+
+      <!-- 手机 -->
+      <article class="contact-card contact-card--phone">
+        <span class="contact-card__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="6" y="2.6" width="12" height="18.8" rx="3"/>
+            <path d="M10.6 5.6h2.8"/>
+            <path d="M11 18.4h2"/>
+          </svg>
+        </span>
+        <div class="contact-card__body">
+          <span class="contact-card__label">手机 · Phone</span>
+          <a class="contact-card__value" href="tel:15695455650">156 9545 5650</a>
+          <span class="contact-card__hint">点击直接拨号</span>
+        </div>
+        <button class="contact-card__copy" type="button"
+                data-copy="15695455650" aria-label="复制手机号">
+          <svg class="contact-card__copy-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="11" height="11" rx="2.4"/>
+            <path d="M15.5 9V6.4A2.4 2.4 0 0 0 13.1 4H6.4A2.4 2.4 0 0 0 4 6.4v6.7A2.4 2.4 0 0 0 6.4 15.5H9"/>
+          </svg>
+          <svg class="contact-card__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6.5L9.5 17 4 11.6"/>
+          </svg>
+        </button>
+      </article>
+
+    </div>
+
+    <!-- 署名 + 站点二维码：扫码即可把本站带走 -->
+    <div class="signboard reveal">
+      <div class="signboard__qr">
+        <img src="assets/qr.png" alt="扫描二维码访问本站" width="150" height="150" decoding="async">
+      </div>
+      <div class="signboard__body">
+        <p class="signboard__eyebrow">
+          <i class="signboard__dot" aria-hidden="true"></i>
+          Website · 本站
+        </p>
+        <p class="signboard__name">李成泽 · 个人作品集</p>
+        <p class="signboard__roles">内容运营 / 品牌运营 / 广告创意 / AIGC 视觉</p>
+        <a class="signboard__link" href="https://lichengze-portfolio.app.workbuddy.host/" target="_blank" rel="noopener">lichengze-portfolio.app.workbuddy.host</a>
+        <p class="signboard__hint">手机扫描左侧二维码，即可打开本站</p>
+      </div>
+    </div>
+
+    <footer class="contact__foot reveal">
+      <span class="contact__copy">© 2026 李成泽 · 个人作品集</span>
+      <a class="contact__top" href="#home">
+        <span>回到顶部</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 19V5M5.5 11.5L12 5l6.5 6.5"/>
+        </svg>
+      </a>
+    </footer>
+
+  </div>
+</section>
+
+<!-- 一键复制提示 -->
+<div class="toast" id="toast" role="status" aria-live="polite">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M20 6.5L9.5 17 4 11.6"/>
+  </svg>
+  <span id="toastText">已复制到剪贴板</span>
+</div>
+
+<!-- 视频 / 证书图片 弹层 -->
+<div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-hidden="true">
+  <div class="lightbox__backdrop" data-close></div>
+  <div class="lightbox__panel">
+    <button class="lightbox__close" type="button" aria-label="关闭" data-close>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="lightbox__stage">
+      <video class="lightbox__video" id="lightboxVideo" controls playsinline preload="none"></video>
+      <img class="lightbox__image" id="lightboxImage" alt="" decoding="async" hidden>
+      <div class="lightbox__empty" id="lightboxEmpty">
+        <div class="lightbox__empty-icon" aria-hidden="true">
+          <!-- 视频图标 -->
+          <svg class="lightbox__icon-video" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 10l4.55-2.27A1 1 0 0121 8.6v6.8a1 1 0 01-1.45.87L15 14"/><rect x="3" y="6" width="12" height="12" rx="2"/>
+          </svg>
+          <!-- 证书图片图标 -->
+          <svg class="lightbox__icon-image" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="M4 17l4.5-4.2a1.6 1.6 0 012.2 0L19 20"/>
+          </svg>
+        </div>
+        <p class="lightbox__empty-title" id="lightboxEmptyTitle">视频即将上线</p>
+        <p class="lightbox__empty-desc" id="lightboxEmptyDesc">把视频文件放入 assets/videos 目录即可自动播放</p>
+      </div>
+    </div>
+    <div class="lightbox__info">
+      <h3 class="lightbox__title" id="lightboxTitle">作品标题</h3>
+      <p class="lightbox__meta" id="lightboxMeta">分类</p>
+    </div>
+  </div>
+</div>
+
+<!-- 自定义光标：纸飞机 -->
+<!-- 拖尾光带画布（独立全屏层，不随光标容器变换） -->
+<canvas class="cursor__trail-canvas" id="cursorTrail" aria-hidden="true"></canvas>
+
+<div class="cursor" id="cursor" aria-hidden="true">
+  <svg class="cursor__plane" id="cursorPlane" viewBox="0 0 48 48" fill="none">
+    <!--
+      卡通纸飞机（俯视）
+      机头朝上 (24,4)，两翼向左下/右下张开
+      直折线 + 圆角 + 粗描边 = 卡通感
+    -->
+    <!-- 左翼（受光面 · 最亮） -->
+    <path class="plane__wing"
+          d="M24 4 L4 37 L24 27 Z"
+          fill="url(#pw)" stroke-linejoin="round"/>
+    <!-- 右翼（背光面 · 中亮，与深色背景拉开） -->
+    <path class="plane__body"
+          d="M24 4 L24 27 L44 37 Z"
+          fill="url(#pb)" stroke-linejoin="round"/>
+    <!-- 中脊折面（折痕阴影 · 最暗但仍有辨识度） -->
+    <path class="plane__fold"
+          d="M24 4 L24 27 L15 31 Z"
+          fill="url(#pf)" stroke-linejoin="round"/>
+    <defs>
+      <linearGradient id="pw" x1="4" y1="4" x2="24" y2="37" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffffff"/>
+        <stop offset="1" stop-color="#e8eef7"/>
+      </linearGradient>
+      <linearGradient id="pb" x1="24" y1="4" x2="44" y2="37" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#cdd9e8"/>
+        <stop offset="1" stop-color="#a9bad0"/>
+      </linearGradient>
+      <linearGradient id="pf" x1="24" y1="4" x2="15" y2="31" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#a3b2c7"/>
+        <stop offset="1" stop-color="#8494ab"/>
+      </linearGradient>
+    </defs>
+  </svg>
+  <span class="cursor__dot" id="cursorDot"></span>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
