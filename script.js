@@ -42,6 +42,39 @@
   }
 
   /* ------------------------------------------------------------
+     把 play() 在「用户手势还有效」的这一刻发出去。
+     浏览器的自动播放策略按手势有效期放行：手势一旦过期，play() 会被
+     Promise 拒绝（NotAllowedError）。所以顺序必须是
+     「点击 → 立刻 play()」，绝不能是「点击 → 等媒体加载完 → play()」。
+     三层兜底：正常播放 → 静音重试 → 明确提示，绝不静默失败。
+     ------------------------------------------------------------ */
+  function playWithGesture(el, onOk, onMuted, onFail) {
+    if (!el) { if (onFail) onFail(); return; }
+    var p;
+    try { p = el.play(); } catch (e) { if (onFail) onFail(); return; }
+    if (!p || typeof p.then !== 'function') { if (onOk) onOk(); return; }   // 老浏览器
+    p.then(function () {
+      if (onOk) onOk();
+    }, function (err) {
+      if (window.console && console.warn) {
+        console.warn('[video] 手势内播放被拒，改静音重试：', err && err.name, err && err.message);
+      }
+      el.muted = true;
+      var p2;
+      try { p2 = el.play(); } catch (e) { if (onFail) onFail(); return; }
+      if (!p2 || typeof p2.then !== 'function') { if (onMuted) onMuted(); return; }
+      p2.then(function () {
+        if (onMuted) onMuted();
+      }, function (err2) {
+        if (window.console && console.warn) {
+          console.warn('[video] 静音播放仍被拒：', err2 && err2.name, err2 && err2.message);
+        }
+        if (onFail) onFail();
+      });
+    });
+  }
+
+  /* ------------------------------------------------------------
      1. 背景视频：加载失败 / 无素材时优雅降级为动态渐变海报
      ------------------------------------------------------------ */
   var media = document.querySelector('.hero__media');
@@ -535,6 +568,7 @@
       lightboxImage.removeAttribute('src');
     }
     lightbox.classList.toggle('is-image', !!imgSrc);
+    lightbox.classList.remove('is-muted', 'is-blocked');
     if (lightboxEmpty) lightboxEmpty.hidden = false;
     if (lightboxEmptyTitle) {
       lightboxEmptyTitle.textContent = imgSrc ? '证书图片待上传' : '视频即将上线';
@@ -557,21 +591,29 @@
       }, { once: true });
       lightboxImage.src = imgSrc;
     } else if (src && lightboxVideo) {
+      lightboxVideo.muted = false;
+      lightboxVideo.hidden = false;                     // 立刻显示：原生控件第一时间可用，
+      if (lightboxEmpty) lightboxEmpty.hidden = true;   // 不必干等到 loadeddata
+
+      lightboxVideo.addEventListener('error', function () {
+        lightboxVideo.hidden = true;
+        if (lightboxEmpty) {
+          lightboxEmpty.hidden = false;
+          if (lightboxEmptyTitle) lightboxEmptyTitle.textContent = '视频加载失败';
+          if (lightboxEmptyDesc) {
+            lightboxEmptyDesc.textContent = '网络较慢时容易超时，关掉弹层再点一次卡片即可重试';
+          }
+        }
+      }, { once: true });
+
       lightboxVideo.src = src;
       lightboxVideo.load();
 
-      var onReady = function () {
-        lightboxVideo.hidden = false;
-        if (lightboxEmpty) lightboxEmpty.hidden = true;
-        var p = lightboxVideo.play();
-        if (p && typeof p.catch === 'function') p.catch(function () {});
-      };
-
-      lightboxVideo.addEventListener('loadeddata', onReady, { once: true });
-      lightboxVideo.addEventListener('error', function () {
-        lightboxVideo.hidden = true;
-        if (lightboxEmpty) lightboxEmpty.hidden = false;
-      }, { once: true });
+      // 同实习大屏：play() 就在这次点击的手势里发出去。
+      // 拖到 loadeddata 再播，手势过期后会被浏览器拒绝、且毫无提示。
+      playWithGesture(lightboxVideo, null,
+        function () { lightbox.classList.add('is-muted'); },    // 静音兜底
+        function () { lightbox.classList.add('is-blocked'); }); // 只能手动点控件
     }
 
     lightbox.classList.add('is-open');
@@ -945,16 +987,10 @@
           videoBg.load();
         }
 
-        // 首帧就绪：先把画面亮出来（静止），点卡片才播放
+        // 首帧就绪：把画面亮出来（静止）。播放不在这里发起，见下方 startPlay。
         videoEl.onloadeddata = function () {
           videoEl.classList.add('is-ready');
-          if (shouldPlay) {
-            stage.classList.add('is-playing');
-            if (emptyEl) emptyEl.classList.add('is-hidden');
-            var p = videoEl.play();
-            if (p && typeof p.catch === 'function') p.catch(function () {});
-          } else {
-            // 未播放：留着「点击播放」的提示，避免以为卡住了
+          if (!shouldPlay) {
             stage.classList.remove('is-playing');
             stage.classList.add('is-loaded');
             if (emptyEl) emptyEl.classList.remove('is-hidden');
@@ -964,13 +1000,62 @@
           videoEl.classList.remove('is-ready');
           stage.classList.remove('is-playing');
           stage.classList.remove('is-loaded');
+          stage.classList.remove('is-blocked');
           if (emptyEl) {
             emptyEl.classList.remove('is-hidden');
             var t = emptyEl.querySelector('.draw__empty-title');
             if (t) t.textContent = '该作品视频待上传';
           }
         };
+
+        if (shouldPlay) {
+          // 就在点击的这一刻播，绝不拖到 loadeddata（拖过去手势就过期了）
+          startPlay();
+        } else {
+          stage.classList.remove('is-playing');
+          stage.classList.add('is-loaded');
+          if (emptyEl) emptyEl.classList.remove('is-hidden');
+        }
       }
+
+      /* ----------------------------------------------------------
+         开始播放。要害是「当场调用 play()」——见文件上方 playWithGesture
+         的说明。播不了时给出明确出口，不留一个没反应的死画面。
+         ---------------------------------------------------------- */
+      function startPlay() {
+        stage.classList.remove('is-loaded');
+        stage.classList.remove('is-blocked');
+        stage.classList.add('is-playing');
+        if (emptyEl) emptyEl.classList.add('is-hidden');
+        playWithGesture(videoEl,
+          function () {                                  // 正常出声播放
+            if (videoBg) { try { videoBg.play(); } catch (e) {} }
+          },
+          function () {                                  // 静音兜底：画面对就行
+            stage.classList.add('is-muted');
+            if (videoBg) { try { videoBg.play(); } catch (e) {} }
+          },
+          function () {                                  // 真播不了：明说，别装死
+            stage.classList.remove('is-playing');
+            stage.classList.add('is-blocked');
+            if (emptyEl) {
+              emptyEl.classList.remove('is-hidden');
+              var t = emptyEl.querySelector('.draw__empty-title');
+              if (t) t.textContent = '点这里播放';
+            }
+          });
+      }
+
+      // 大屏本身也能点：用户在视频画面上点一下就该有反应，
+      // 不该只有旁边那一列小卡片可点
+      stage.addEventListener('click', function (e) {
+        if (e.target === videoEl) {
+          var r = videoEl.getBoundingClientRect();
+          if (e.clientY > r.bottom - 56) return;         // 落在原生控件条上，别抢
+        }
+        if (videoEl.paused) startPlay();
+        else videoEl.pause();
+      });
     }
 
     for (var dc = 0; dc < drawCards.length; dc++) initDrawCard(drawCards[dc]);
