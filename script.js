@@ -17,7 +17,7 @@
      （没传完 / 权限没开 / 地址写错），会自动回退到仓库里那份，只重试
      一次。也就是说这个开关填错不会把站点搞挂，最坏就是慢回原来的样子。
      ------------------------------------------------------------ */
-  var VIDEO_BASE = '';
+  var VIDEO_BASE = 'https://lichengze-portfolio-1488607708.cos.ap-guangzhou.myqcloud.com/';
 
   /* 把 data-video 里的相对路径解析成真正要加载的地址。
      已经是 http(s) 绝对地址的原样返回；否则按 VIDEO_BASE 加前缀。 */
