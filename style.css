@@ -4719,3 +4719,28 @@ html.has-env .about__name {
     background: rgba(8, 8, 11, .93) !important;
   }
 }
+
+/* ------------------------------------------------------------
+   播放状态的兜底提示
+   —— 静音兜底播放时（浏览器拦下了带声音的播放）给个小角标，
+      免得用户以为「没声音 = 坏了」。
+   —— 完全播不了时提示层文案会变成「点这里播放」，点大屏即可重试
+      （见 script.js 的 startPlay）。
+   ------------------------------------------------------------ */
+.draw__screen.is-muted::after {
+  content: "已静音播放 · 点右下角喇叭开声音";
+  position: absolute;
+  right: 12px;
+  bottom: 46px;
+  z-index: 3;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(8, 8, 11, .64);
+  color: rgba(255, 255, 255, .64);
+  font-size: 11px;
+  letter-spacing: .04em;
+  pointer-events: none;
+}
+
+/* 播不了时，大屏整体就是「点一下重试」的入口 */
+.draw__screen.is-blocked { cursor: pointer; }
