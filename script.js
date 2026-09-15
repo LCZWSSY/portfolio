@@ -1282,7 +1282,11 @@
       for (var k = 0; k < sceneEls.length; k++) {
         // 只有相邻两屏参与淡入淡出，其余强制归零
         var o = k === i ? (1 - t) : (k === i + 1 ? t : 0);
-        sceneEls[k].style.opacity = o < 0.002 ? '0' : o.toFixed(3);
+        var on = o >= 0.002;
+        sceneEls[k].style.opacity = on ? o.toFixed(3) : '0';
+        // 关掉的场景直接退出绘制。手机上七个全屏场景同时参与光栅化会把
+        // 显存吃光，滑动时就是白屏闪烁（详见 style.css 末尾同名注释）。
+        sceneEls[k].style.visibility = on ? 'visible' : 'hidden';
       }
 
       // 视差：以本屏中心为原点，越远的层走得越慢
