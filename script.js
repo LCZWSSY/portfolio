@@ -19,6 +19,29 @@
   };
 
   /* ------------------------------------------------------------
+     0. 点击真伪判定（触摸设备必备）
+     手机上用手指翻页时，浏览器仍可能补发一次 click；卡片的点击处理
+     会把这次「翻页动作」当成「点卡片」，灯箱突然弹出、视频被切走。
+     这里记住按下时的落点，抬手位置偏离超过阈值就不认这次点击；
+     键盘（Enter / Space）没有落点，一律放行。
+     ------------------------------------------------------------ */
+  var tapStart = { x: 0, y: 0, has: false };
+
+  document.addEventListener('pointerdown', function (e) {
+    tapStart.x = e.clientX;
+    tapStart.y = e.clientY;
+    tapStart.has = true;
+  }, true);
+
+  function isRealClick(e) {
+    if (!e || e.detail === 0) return true;   // 键盘触发
+    if (!tapStart.has) return true;          // 老浏览器拿不到落点，不误杀
+    var dx = e.clientX - tapStart.x;
+    var dy = e.clientY - tapStart.y;
+    return dx * dx + dy * dy <= 100;         // 10px 以内才算点击
+  }
+
+  /* ------------------------------------------------------------
      1. 背景视频：加载失败 / 无素材时优雅降级为动态渐变海报
      ------------------------------------------------------------ */
   var media = document.querySelector('.hero__media');
@@ -315,21 +338,32 @@
     }
 
     /* --- 拖动 / 触摸滑动 --- */
-    var drag = { active: false, startX: 0, startOffset: 0, moved: 0 };
+    var drag = { active: false, startX: 0, startY: 0, startOffset: 0, moved: 0, axis: '' };
 
     function onDown(e) {
-      // 只响应主按键
-      if (e.button !== undefined && e.button !== 0) return;
+      // 鼠标只响应主键
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
       drag.active = true;
       drag.moved = 0;
+      drag.axis = '';                 // 还没判定方向
       drag.startX = e.clientX;
+      drag.startY = e.clientY;
       drag.startOffset = offset;
-      track.style.cursor = 'grabbing';
+      if (e.pointerType === 'mouse') track.style.cursor = 'grabbing';
     }
 
     function onMove(e) {
       if (!drag.active) return;
       var dx = e.clientX - drag.startX;
+      var dy = e.clientY - drag.startY;
+
+      // 手指刚落下时先判方向：纵向为主说明用户想翻页，马上交还，别抢滚动
+      if (!drag.axis) {
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        drag.axis = Math.abs(dx) > Math.abs(dy) ? 'x' : 'y';
+        if (drag.axis === 'y') { drag.active = false; return; }
+      }
+
       drag.moved = Math.abs(dx);
       offset = wrap(drag.startOffset + dx);
       track.style.transform = 'translate3d(' + offset.toFixed(2) + 'px,0,0)';
@@ -355,37 +389,72 @@
     window.addEventListener('pointerup', onUp);
     window.addEventListener('pointercancel', onUp);
 
-    // 悬停暂停
-    track.addEventListener('mouseenter', function () { paused = true; });
-    track.addEventListener('mouseleave', function () {
-      paused = false;
-      lastTs = null;
+    // 暂停用「原因集合」管理：悬停 / 焦点 / 页面隐藏各自登记，任一条解除就恢复滚动。
+    // 早先是一个布尔量，谁最后写谁说了算 —— 手机上合成出来的 mouseenter
+    // 会把整条带子永久冻住（mouseleave 不会来），看上去就是一排静止重复的卡片。
+    var pauseReasons = {};
+
+    function setPaused(reason, on) {
+      if (on) pauseReasons[reason] = true; else delete pauseReasons[reason];
+      paused = Object.keys(pauseReasons).length > 0;
+      if (!paused) lastTs = null;
+    }
+
+    // 悬停暂停：只认真正的鼠标（触摸设备不要听 mouseenter，那是合成事件）
+    track.addEventListener('pointerenter', function (e) {
+      if (e.pointerType === 'mouse') setPaused('hover', true);
+    });
+    track.addEventListener('pointerleave', function (e) {
+      if (e.pointerType === 'mouse') setPaused('hover', false);
     });
 
     // 焦点在卡片上时也暂停，方便键盘操作
-    track.addEventListener('focusin', function () { paused = true; });
-    track.addEventListener('focusout', function () {
-      paused = false;
-      lastTs = null;
-    });
+    track.addEventListener('focusin', function () { setPaused('focus', true); });
+    track.addEventListener('focusout', function () { setPaused('focus', false); });
 
-    // 页面不可见时停止
+    // 页面不可见时暂停，回到前台要恢复 —— 只暂停不恢复会让带子永久静止
     document.addEventListener('visibilitychange', function () {
-      if (document.hidden) {
-        paused = true;
-      }
+      setPaused('hidden', document.hidden);
     });
 
     rafId2 = requestAnimationFrame(frame);
 
-    // 尺寸变化后重算周期
+    function railWidth() {
+      return track.parentElement ? track.parentElement.offsetWidth : window.innerWidth;
+    }
+
+    // 视口宽度大变（横竖屏切换等）就按当前宽度重建克隆：
+    // 否则循环周期和实际组宽对不上，接缝处会露出重复的卡片或空白。
+    function rebuild() {
+      Array.prototype.slice.call(track.children).forEach(function (c) {
+        if (c.getAttribute('aria-hidden') === 'true') track.removeChild(c);
+      });
+      groupWidth = track.scrollWidth;
+      clones = Math.max(2, Math.ceil((railWidth() * 2) / Math.max(groupWidth, 1)) + 1);
+      for (var c = 1; c < clones; c++) {
+        originals.forEach(function (node) {
+          var clone = node.cloneNode(true);
+          clone.setAttribute('aria-hidden', 'true');
+          clone.setAttribute('tabindex', '-1');
+          track.appendChild(clone);
+        });
+      }
+      offset = wrap(offset);
+    }
+
     var resizeTimer = null;
+    var lastRailW = railWidth();
     window.addEventListener('resize', function () {
       clearTimeout(resizeTimer);
       resizeTimer = setTimeout(function () {
-        groupWidth = track.scrollWidth / clones;
-        offset = wrap(offset);
-      }, 180);
+        var w = railWidth();
+        if (Math.abs(w - lastRailW) > 100) {
+          lastRailW = w;
+          rebuild();
+        } else {
+          offset = wrap(offset);
+        }
+      }, 200);
     });
   }
 
@@ -538,6 +607,8 @@
     // 但它和真卡长得一模一样，鼠标点击必须照常打开 —— 早先这里连 aria-hidden 一起挡掉，
     // 导致滚动到「克隆那一段」时整排卡片点了没反应。
     document.addEventListener('click', function (e) {
+      // 只认真正的点击：手机上翻页时补发的 click 位移很大，不算
+      if (!isRealClick(e)) return;
       var card = e.target.closest ? e.target.closest('.work-card, .proj-card, .honor-card') : null;
       if (!card) return;
       openLightbox(card);
@@ -815,14 +886,17 @@
         if (siblings[i] === card) { idx = i; break; }
       }
 
-      // 第一张卡自动选中并尝试加载（大屏不空着）
+      // 第一张卡自动选中并加载首帧（大屏不空着），但**不自动播放**：
+      // 自动播放会让浏览器拦下带声音的主视频、却放行静音的底层垫图，
+      // 结果大屏上有一层没人点过却自己在动的画面。播放一律等点击。
       if (!drawState[key].inited) {
         drawState[key].inited = true;
-        loadInto(card, idx, siblings.length);
+        loadInto(card, idx, siblings.length, false);
       }
 
-      card.addEventListener('click', function () {
-        loadInto(card, idx, siblings.length);
+      card.addEventListener('click', function (e) {
+        if (!isRealClick(e)) return;      // 翻页时的误触不算
+        loadInto(card, idx, siblings.length, true);
       });
 
       // 底层垫图与主画面同步：暂停 / 拖进度条时别各跑各的
@@ -837,7 +911,7 @@
         try { videoBg.currentTime = videoEl.currentTime; } catch (e) {}
       });
 
-      function loadInto(c, i, total) {
+      function loadInto(c, i, total, shouldPlay) {
         // 清掉同组其它卡的高亮
         for (var j = 0; j < siblings.length; j++) {
           siblings[j].classList.remove('is-active');
@@ -852,6 +926,7 @@
         if (emptyEl) emptyEl.classList.remove('is-hidden');
         videoEl.classList.remove('is-ready');
         stage.classList.remove('is-playing');
+        stage.classList.remove('is-loaded');
 
         if (nameEl) nameEl.textContent = name;
         if (countEl) countEl.textContent = (i + 1) + ' / ' + total;
@@ -862,26 +937,33 @@
         videoEl.src = src;
         videoEl.load();
 
-        // 底层垫图跟着换源：静音播放，只为铺满黑边
+        // 底层垫图只跟着换源，自己不播 —— 它一旦自动播放，大屏上就会有
+        // 一层「没人点过却在动」的模糊画面。播放/暂停由主视频的事件同步。
         if (videoBg) {
           videoBg.pause();
           videoBg.src = src;
           videoBg.load();
-          var pb0 = videoBg.play();
-          if (pb0 && typeof pb0.catch === 'function') pb0.catch(function () {});
         }
 
-        // 视频存在 → 显示并播放；不存在 → 保持占位提示
+        // 首帧就绪：先把画面亮出来（静止），点卡片才播放
         videoEl.onloadeddata = function () {
           videoEl.classList.add('is-ready');
-          stage.classList.add('is-playing');
-          if (emptyEl) emptyEl.classList.add('is-hidden');
-          var p = videoEl.play();
-          if (p && typeof p.catch === 'function') p.catch(function () {});
+          if (shouldPlay) {
+            stage.classList.add('is-playing');
+            if (emptyEl) emptyEl.classList.add('is-hidden');
+            var p = videoEl.play();
+            if (p && typeof p.catch === 'function') p.catch(function () {});
+          } else {
+            // 未播放：留着「点击播放」的提示，避免以为卡住了
+            stage.classList.remove('is-playing');
+            stage.classList.add('is-loaded');
+            if (emptyEl) emptyEl.classList.remove('is-hidden');
+          }
         };
         videoEl.onerror = function () {
           videoEl.classList.remove('is-ready');
           stage.classList.remove('is-playing');
+          stage.classList.remove('is-loaded');
           if (emptyEl) {
             emptyEl.classList.remove('is-hidden');
             var t = emptyEl.querySelector('.draw__empty-title');
