@@ -2705,12 +2705,6 @@ em { font-style: normal; }
   margin-left: .4em;
   white-space: nowrap;
 }
-.honor__sub {
-  margin-top: 12px;
-  font-size: 14.5px;
-  color: var(--text-soft);
-  max-width: 62ch;
-}
 
 /* --- 两排：上 6 张竖版 / 下 4 张横版 --- */
 .honor__row {
@@ -4441,7 +4435,6 @@ html.has-env .about__name {
 }
 html.has-env .work__sub,
 html.has-env .exp__sub,
-html.has-env .honor__sub,
 html.has-env .contact__sub,
 html.has-env .about__sub {
   text-shadow: 0 1px 14px rgba(4, 6, 10, .82), 0 1px 2px rgba(4, 6, 10, .6);
@@ -4663,7 +4656,6 @@ html.has-env .exp__sub,
 html.has-env .exp__title-hint,
 html.has-env .proj__intro-lead,
 html.has-env .proj__title-hint,
-html.has-env .honor__sub,
 html.has-env .honor__title-hint,
 html.has-env .contact__sub,
 html.has-env .exp-card__headline,
