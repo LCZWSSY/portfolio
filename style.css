@@ -1971,6 +1971,8 @@ em { font-style: normal; }
   gap: 10px;
   color: var(--text-faint);
   transition: opacity .4s var(--ease);
+  /* 它只是提示层：首帧静止时也要盖在大屏上，不能挡住底下的播放控件 */
+  pointer-events: none;
 }
 .draw__empty.is-hidden { opacity: 0; pointer-events: none; }
 
@@ -1999,6 +2001,7 @@ em { font-style: normal; }
   transition: opacity .4s var(--ease);
 }
 .draw__screen.is-playing .draw__screen-bar,
+.draw__screen.is-loaded .draw__screen-bar,
 .draw__screen:hover .draw__screen-bar { opacity: 1; }
 
 .draw__screen-name {
