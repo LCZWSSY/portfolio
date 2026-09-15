@@ -5,6 +5,34 @@
 (function () {
   'use strict';
 
+  /* ------------------------------------------------------------
+     视频资源前缀（托管开关）
+     --------------------------------------------------------------
+     留空字符串 = 用仓库里的同名文件（GitHub Pages，国内约 0.05 MB/s）。
+     填上对象存储地址、**末尾带斜杠** = 视频改从国内存储拉，例如：
+         'https://portfolio-1234567890.cos.ap-shanghai.myqcloud.com/'
+     只影响 <video>；图片/证书仍在 GitHub。
+
+     容错：HTML 里的相对路径一直保留着，所以一旦对象存储取不到
+     （没传完 / 权限没开 / 地址写错），会自动回退到仓库里那份，只重试
+     一次。也就是说这个开关填错不会把站点搞挂，最坏就是慢回原来的样子。
+     ------------------------------------------------------------ */
+  var VIDEO_BASE = '';
+
+  /* 把 data-video 里的相对路径解析成真正要加载的地址。
+     已经是 http(s) 绝对地址的原样返回；否则按 VIDEO_BASE 加前缀。 */
+  function resolveVideo(src) {
+    if (!src) return '';
+    if (/^https?:\/\//i.test(src)) return src;
+    if (!VIDEO_BASE) return src;
+    return VIDEO_BASE + src.replace(/^\.?\//, '');
+  }
+
+  /* 当前这个 video 是不是正在用对象存储（用于判断该不该回退） */
+  function usingRemote(el) {
+    return !!(VIDEO_BASE && el && (el.currentSrc || el.src || '').indexOf(VIDEO_BASE) === 0);
+  }
+
   var docEl = document.documentElement;
 
   /* ------------------------------------------------------------
@@ -595,7 +623,21 @@
       lightboxVideo.hidden = false;                     // 立刻显示：原生控件第一时间可用，
       if (lightboxEmpty) lightboxEmpty.hidden = true;   // 不必干等到 loadeddata
 
+      var lbLocal = src;
+      lightboxVideo.setAttribute('data-local-src', lbLocal);
+
       lightboxVideo.addEventListener('error', function () {
+        // 对象存储取不到就回退仓库副本，只重试一次
+        if (usingRemote(lightboxVideo) && lbLocal) {
+          if (window.console && console.warn) {
+            console.warn('[video] 灯箱：对象存储取不到，回退仓库副本：', lbLocal);
+          }
+          lightboxVideo.src = lbLocal;
+          lightboxVideo.load();
+          var p3 = lightboxVideo.play();
+          if (p3 && typeof p3.catch === 'function') p3.catch(function () {});
+          return;
+        }
         lightboxVideo.hidden = true;
         if (lightboxEmpty) {
           lightboxEmpty.hidden = false;
@@ -604,9 +646,9 @@
             lightboxEmptyDesc.textContent = '网络较慢时容易超时，关掉弹层再点一次卡片即可重试';
           }
         }
-      }, { once: true });
+      });
 
-      lightboxVideo.src = src;
+      lightboxVideo.src = resolveVideo(src);
       lightboxVideo.load();
 
       // 同实习大屏：play() 就在这次点击的手势里发出去。
@@ -975,15 +1017,18 @@
 
         if (!src) return;
 
+        var remoteSrc = resolveVideo(src);
+        videoEl.setAttribute('data-local-src', src);   // 回退用，只重试一次
+
         videoEl.pause();
-        videoEl.src = src;
+        videoEl.src = remoteSrc;
         videoEl.load();
 
         // 底层垫图只跟着换源，自己不播 —— 它一旦自动播放，大屏上就会有
         // 一层「没人点过却在动」的模糊画面。播放/暂停由主视频的事件同步。
         if (videoBg) {
           videoBg.pause();
-          videoBg.src = src;
+          videoBg.src = remoteSrc;
           videoBg.load();
         }
 
@@ -997,6 +1042,18 @@
           }
         };
         videoEl.onerror = function () {
+          // ① 先试回退：对象存储取不到就换回仓库里那份（只重试一次）
+          var localSrc = videoEl.getAttribute('data-local-src') || '';
+          if (usingRemote(videoEl) && localSrc) {
+            if (window.console && console.warn) {
+              console.warn('[video] 对象存储取不到，回退仓库副本：', localSrc);
+            }
+            videoEl.src = localSrc;
+            videoEl.load();
+            if (videoBg) { videoBg.src = localSrc; videoBg.load(); }
+            return;
+          }
+          // ② 两边都取不到，才认输并明确提示
           videoEl.classList.remove('is-ready');
           stage.classList.remove('is-playing');
           stage.classList.remove('is-loaded');
